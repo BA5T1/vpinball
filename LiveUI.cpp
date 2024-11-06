@@ -771,7 +771,130 @@ static void HelpEditableHeader(bool is_live, IEditable *editable, IEditable *liv
    ImGui::Separator();
 }
 
+bool validateRegex(const std::string &pattern)
+{
+   try
+   {
+      // Try to construct the regex object, which will throw std::regex_error if the pattern is invalid
+      std::regex tempRegex(pattern);
+   }
+   catch (const std::regex_error &e)
+   {
+      return false; // Return false indicating the pattern is invalid
+   }
+   // No exceptions were thrown, pattern is valid
+   return true;
+}
 
+// Function load filter
+static void LoadFilter() // Launcher
+{
+   size_t filterIndex = 0;
+   FilterInfo info2;
+   info2.filtername = "No Filter";
+   info2.needed = "";
+   info2.forbidden = "";
+   info2.id = filterIndex;
+   filters.push_back(info2);
+
+   filterIndex++;
+
+   info2.filtername = "Favorites";
+   info2.needed = "";
+   info2.forbidden = "";
+   info2.id = filterIndex;
+   filters.push_back(info2);
+
+   filterIndex++;
+
+   info2.filtername = "New additions";
+   info2.needed = "";
+   info2.forbidden = "";
+   info2.id = filterIndex;
+   filters.push_back(info2);
+
+   filterIndex++;
+
+   info2.filtername = "Last played";
+   info2.needed = "";
+   info2.forbidden = "";
+   info2.id = filterIndex;
+   filters.push_back(info2);
+
+   filterIndex++;
+
+   info2.filtername = "Filebrowser (all)";
+   info2.needed = "";
+   info2.forbidden = "";
+   info2.id = filterIndex;
+   filters.push_back(info2);
+
+   filterIndex++;
+
+   info2.filtername = "Filebrowser (not assigned)";
+   info2.needed = "";
+   info2.forbidden = "";
+   info2.id = filterIndex;
+   filters.push_back(info2);
+
+   HKEY hKey;
+   std::string basePath = "Software\\Visual Pinball\\VP10\\Launcher\\Filters";
+
+   if (activeSetup == 1)
+   {
+      basePath = "Software\\Visual Pinball\\VP10\\Launcher\\altFilters";
+   }
+
+   if (RegOpenKeyEx(HKEY_CURRENT_USER, basePath.c_str(), 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+   {
+      std::cerr << "Failed to open registry key." << std::endl;
+   }
+
+   DWORD index = 0;
+   char keyName[255];
+   DWORD keyNameSize = sizeof(keyName);
+
+   // Enumerate all subkeys, which correspond to different filters
+   while (RegEnumKeyEx(hKey, index, keyName, &keyNameSize, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+   {
+      HKEY subKey;
+      if (RegOpenKeyEx(hKey, keyName, 0, KEY_READ, &subKey) == ERROR_SUCCESS)
+      {
+         FilterInfo info;
+         info.filtername = keyName;
+         info.needed = ReadStringFromRegistry(subKey, "needed");
+         info.forbidden = ReadStringFromRegistry(subKey, "forbidden");
+         info.id = filterIndex + 1;
+
+         if (validateRegex(info.needed))
+         {
+            filters.push_back(info);
+            filterIndex++;
+         }
+
+
+         RegCloseKey(subKey);
+      }
+      index++;
+      keyNameSize = sizeof(keyName); // Reset the size for the next iteration
+   }
+
+   RegCloseKey(hKey);
+}
+
+std::string replaceBackslashesWithForwardSlashes(const std::string &input)
+{
+   std::string output = input;
+   std::replace(output.begin(), output.end(), '\\', '/');
+   return output;
+}
+
+std::string brIntoMiddle(std::string &str)
+{
+   size_t middleIndex = str.length() / 2;
+   str.insert(middleIndex, "<br>");
+   return str;
+}
 
 std::string processNVRAMString(const std::string &input)
 {
