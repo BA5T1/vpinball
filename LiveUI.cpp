@@ -772,6 +772,70 @@ static void HelpEditableHeader(bool is_live, IEditable *editable, IEditable *liv
 }
 
 
+// Launcher
+std::string ensureTrailingBackslash(const std::string &path)
+{
+   if (path.empty())
+   {
+      return path;
+   }
+
+   std::string modifiedPath = path;
+   if (modifiedPath.back() != '\\')
+   {
+      modifiedPath += '\\';
+   }
+   return modifiedPath;
+}
+
+
+EnumAssignKeys stringToEnum(const std::string &key) // Launcher
+{
+   static const std::unordered_map<std::string, EnumAssignKeys> keyMap = { { "eLeftFlipperKey", eLeftFlipperKey }, { "eRightFlipperKey", eRightFlipperKey },
+      { "eStagedLeftFlipperKey", eStagedLeftFlipperKey }, { "eStagedRightFlipperKey", eStagedRightFlipperKey }, { "eLeftTiltKey", eLeftTiltKey }, { "eRightTiltKey", eRightTiltKey },
+      { "eCenterTiltKey", eCenterTiltKey }, { "ePlungerKey", ePlungerKey }, { "eFrameCount", eFrameCount }, { "eDBGBalls", eDBGBalls }, { "eDebugger", eDebugger },
+      { "eAddCreditKey", eAddCreditKey }, { "eAddCreditKey2", eAddCreditKey2 }, { "eStartGameKey", eStartGameKey }, { "eMechanicalTilt", eMechanicalTilt },
+      { "eRightMagnaSave", eRightMagnaSave }, { "eLeftMagnaSave", eLeftMagnaSave }, { "eExitGame", eExitGame }, { "eVolumeUp", eVolumeUp }, { "eVolumeDown", eVolumeDown },
+      { "eLockbarKey", eLockbarKey }, { "eEnable3D", eEnable3D }, { "eTableRecenter", eTableRecenter }, { "eTableUp", eTableUp }, { "eTableDown", eTableDown }, { "eEscape", eEscape },
+      { "ePause", ePause }, { "eTweak", eTweak }, { "eCKeys", eCKeys } };
+
+   auto it = keyMap.find(key);
+   if (it != keyMap.end())
+   {
+      return it->second;
+   }
+   else
+   {
+      throw std::invalid_argument("Invalid key string");
+   }
+}
+
+// Function to trim line breaks at the end of a string
+std::string TrimLineBreaks(const std::string &str) // Launcher
+{
+   size_t end = str.find_last_not_of("\r\n");
+   return (end == std::string::npos) ? "" : str.substr(0, end + 1);
+}
+
+void updateHighlightColor() // Launcher
+{
+   if (highlightChoice == 0)
+      launcherHighlight = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+   if (highlightChoice == 1)
+      launcherHighlight = ImVec4(1.0f, 0.5f, 0.0f, 1.0f);
+   if (highlightChoice == 2)
+      launcherHighlight = ImVec4(1.0f, 0.2f, 0.2f, 1.0f);
+   if (highlightChoice == 3)
+      launcherHighlight = ImVec4(0.5f, 0.5f, 1.0f, 1.0f);
+   if (highlightChoice == 4)
+      launcherHighlight = ImVec4(0.0f, 1.0f, 1.0f, 1.0f);
+   if (highlightChoice == 5)
+      launcherHighlight = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
+   if (highlightChoice == 6)
+      launcherHighlight = ImVec4(1.0f, 0.2f, 1.0f, 1.0f);
+}
+
+
 std::string getCurrentTime() // Launcher
 {
    std::time_t now = std::time(nullptr);
