@@ -228,6 +228,8 @@ public:
 
    int m_securitylevel;
 
+   string m_szMyIniPath; // Launcher
+
    string m_szMyPath;
    wstring m_wzMyPath;
    string m_szMyPrefPath;

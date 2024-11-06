@@ -2069,7 +2069,7 @@ LiveUI::LiveUI(RenderDevice *const rd)
    m_digitalBigFont = io.Fonts->AddFontFromMemoryCompressedTTF(digital_compressed_data, digital_compressed_size, overlaySize * 1.75f);
 
 
-   const float overlaySize = rd->m_stereo3D == STEREO_VR ? 20.0f : min(32.f * m_dpi, (float)min(m_player->m_wnd_width, m_player->m_wnd_height) / (26.f * 2.0f)); // Fit 26 lines of text on screen
+   //const float overlaySize = rd->m_stereo3D == STEREO_VR ? 20.0f : min(32.f * m_dpi, (float)min(m_player->m_wnd_width, m_player->m_wnd_height) / (26.f * 2.0f)); // Fit 26 lines of text on screen
    m_overlayFont = io.Fonts->AddFontFromMemoryCompressedTTF(droidsans_compressed_data, droidsans_compressed_size, overlaySize);
    m_overlayBoldFont = io.Fonts->AddFontFromMemoryCompressedTTF(droidsansbold_compressed_data, droidsansbold_compressed_size, overlaySize);
    ImFont *H1 = io.Fonts->AddFontFromMemoryCompressedTTF(droidsansbold_compressed_data, droidsansbold_compressed_size, overlaySize * 20.0f / 13.f);
@@ -5624,7 +5624,7 @@ void LiveUI::UpdateTweakModeUI()
                   padding = (windowWidth - ((wrap_width + imageSize) / 2));
                   ImGui::SetCursorPosX(padding - 20);
                   ImGui::SetCursorPosY(50);
-                  ImGui::Image((void *)(intptr_t)myTextureID, ImVec2(imageSize, imageSize)); // Adjust the size as needed
+                  ImGui::Image((ImTextureID)(intptr_t)myTextureID, ImVec2(imageSize, imageSize)); // Adjust the size as needed
                }
 
                if (renderTables)
@@ -5634,21 +5634,21 @@ void LiveUI::UpdateTweakModeUI()
                   {
                      ImGui::SetCursorPosY((launcherWinSize.y - thisImageBigSizeY) / 2);
                      ImGui::SetCursorPosX(30);
-                     ImGui::Image((void *)(intptr_t)myTextureBackID, ImVec2(thisImageBigSizeY, thisImageBigSizeY)); // Adjust the size as needed
+                     ImGui::Image((ImTextureID)(intptr_t)myTextureBackID, ImVec2(thisImageBigSizeY, thisImageBigSizeY)); // Adjust the size as needed
 
                      ImGui::SetCursorPosY((launcherWinSize.y - thisImageBigSizeY) / 2);
                      ImGui::SetCursorPosX(30);
-                     ImGui::Image((void *)(intptr_t)myTextureBigID, ImVec2(thisImageBigSizeX, thisImageBigSizeY)); // Adjust the size as needed
+                     ImGui::Image((ImTextureID)(intptr_t)myTextureBigID, ImVec2(thisImageBigSizeX, thisImageBigSizeY)); // Adjust the size as needed
                   }
                   else
                   {
                      ImGui::SetCursorPosY((launcherWinSize.y - thisImageBigSizeY) / 2);
                      ImGui::SetCursorPosX((launcherWinSize.x / 3 - thisImageBigSizeX) / 2);
-                     ImGui::Image((void *)(intptr_t)myTextureBackID, ImVec2(thisImageBigSizeY, thisImageBigSizeY)); // Adjust the size as needed
+                     ImGui::Image((ImTextureID)(intptr_t)myTextureBackID, ImVec2(thisImageBigSizeY, thisImageBigSizeY)); // Adjust the size as needed
 
                      ImGui::SetCursorPosY((launcherWinSize.y - thisImageBigSizeY) / 2);
                      ImGui::SetCursorPosX((launcherWinSize.x / 3 - thisImageBigSizeX) / 2);
-                     ImGui::Image((void *)(intptr_t)myTextureBigID, ImVec2(thisImageBigSizeX, thisImageBigSizeY)); // Adjust the size as needed
+                     ImGui::Image((ImTextureID)(intptr_t)myTextureBigID, ImVec2(thisImageBigSizeX, thisImageBigSizeY)); // Adjust the size as needed
                   }
                }
 
@@ -5997,7 +5997,7 @@ void LiveUI::UpdateTweakModeUI()
 
       ImGui::SetCursorPosY(launcherWinSize.y - 24 - 10);
       ImGui::SetCursorPosX((windowWidth - 159 - 10));
-      ImGui::Image((void *)(intptr_t)myLogoTextureID, ImVec2(159, 24));
+      ImGui::Image((ImTextureID)(intptr_t)myLogoTextureID, ImVec2(159, 24));
 
       ImGui::SetCursorPosY(launcherWinSize.y - m_overlayFont->FontSize - 10);
 

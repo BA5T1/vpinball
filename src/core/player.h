@@ -608,6 +608,11 @@ public:
    int m_MSAASamples;
    float m_AAfactor;
 
+   // Launcher
+   string m_romname;
+   string m_vpscore;
+   bool m_launcherActive = false;
+
    bool m_dynamicAO;
    bool m_disableAO;
    int GetAOMode(); // 0=Off, 1=Static, 2=Dynamic
