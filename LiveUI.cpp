@@ -19,6 +19,8 @@
 
 #include "core/TableDB.h"
 
+#include "fonts/november.h" // Launcher
+#include "fonts/digital.h" // Launcher
 #include "fonts/DroidSans.h"
 #include "fonts/DroidSansBold.h"
 #include "fonts/IconsForkAwesome.h"
@@ -2034,6 +2036,11 @@ LiveUI::LiveUI(RenderDevice *const rd)
    const vec3 eye(m_live_table->m_right * 0.5f, m_live_table->m_bottom * 0.5f, -m_camDistance);
    const vec3 at(m_live_table->m_right * 0.5f, m_live_table->m_bottom * 0.5f, 0.f);
    const vec3 up(0.f, -1.f, 0.f);
+
+   // Launcher Fontsize
+   launcherLoadFontscale();
+
+
    m_camView.SetLookAtRH(eye, at, up);
    ImGuizmo::AllowAxisFlip(false);
 
@@ -2054,6 +2061,16 @@ LiveUI::LiveUI(RenderDevice *const rd)
    io.Fonts->AddFontFromMemoryCompressedTTF(fork_awesome_compressed_data, fork_awesome_compressed_size, 13.0f * m_dpi, &icons_config, icons_ranges);
 
    // Overlays are displayed in the VR headset for which we do not have a meaningful DPI. This is somewhat hacky but we would really need 2 UI for VR.
+
+   // Launcher
+   float const overlaySize
+      = rd->m_stereo3D == STEREO_VR ? 19.0f * fontFactor : min(32.f * m_dpi, (float)min(m_player->m_wnd_width, m_player->m_wnd_height) / (26.f * 2.0f)); // Fit 26 lines of text on screen
+
+   m_highscoreFont = io.Fonts->AddFontFromMemoryCompressedTTF(november_compressed_data, november_compressed_size, overlaySize * 0.75f);
+   m_digitalFont = io.Fonts->AddFontFromMemoryCompressedTTF(digital_compressed_data, digital_compressed_size, overlaySize);
+   m_digitalBigFont = io.Fonts->AddFontFromMemoryCompressedTTF(digital_compressed_data, digital_compressed_size, overlaySize * 1.75f);
+
+
    const float overlaySize = rd->m_stereo3D == STEREO_VR ? 20.0f : min(32.f * m_dpi, (float)min(m_player->m_wnd_width, m_player->m_wnd_height) / (26.f * 2.0f)); // Fit 26 lines of text on screen
    m_overlayFont = io.Fonts->AddFontFromMemoryCompressedTTF(droidsans_compressed_data, droidsans_compressed_size, overlaySize);
    m_overlayBoldFont = io.Fonts->AddFontFromMemoryCompressedTTF(droidsansbold_compressed_data, droidsansbold_compressed_size, overlaySize);
@@ -2511,16 +2528,924 @@ void LiveUI::Update(const RenderTarget *rt)
    ImGui::EndFrame();
 }
 
+void LiveUI::launchTable()
+{
+   // Launcher
+
+
+   // Open or create a key
+   HKEY hKey;
+   const char *subKey = "SOFTWARE\\Visual Pinball\\VP10\\Launcher";
+   LONG result = RegCreateKeyEx(HKEY_CURRENT_USER, subKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
+   if (result != ERROR_SUCCESS)
+   {
+      // Error creating/opening registry key
+   }
+   else
+   {
+      // Value to write
+      std::string valueToWrite = currentObjects[currentSelection].filename;
+
+
+      // Write the string value to the registry
+      if (activeSetup == 1)
+      {
+         result = RegSetValueEx(hKey, "nextTable1", 0, REG_SZ, reinterpret_cast<const BYTE *>(valueToWrite.c_str()), static_cast<DWORD>((valueToWrite.length() + 1) * sizeof(char)));
+      }
+      else
+      {
+         result = RegSetValueEx(hKey, "nextTable", 0, REG_SZ, reinterpret_cast<const BYTE *>(valueToWrite.c_str()), static_cast<DWORD>((valueToWrite.length() + 1) * sizeof(char)));
+      }
+
+      if (result != ERROR_SUCCESS)
+      {
+         // Error writing to registry
+      }
+      else
+      {
+         // Value to write
+         DWORD valueToWrite = 1; // Example integer value
+
+         // Write the integer value to the registry
+         result = RegSetValueEx(hKey, "launchActive", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+         if (result != ERROR_SUCCESS)
+         {
+            //Error writing to registry
+         }
+         else
+         {
+            // Close the key
+            RegCloseKey(hKey);
+
+            updateLatestFilenames();
+
+            // shut down VPX
+            g_pvp->QuitPlayer(Player::CloseState::CS_CLOSE_APP);
+         }
+      }
+   }
+}
+void LiveUI::closeVPX(bool shutdown)
+{
+   // force exit
+   HKEY hKey;
+   const char *subKey = "SOFTWARE\\Visual Pinball\\VP10\\Launcher";
+   LONG result = RegCreateKeyEx(HKEY_CURRENT_USER, subKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
+   if (result == ERROR_SUCCESS)
+   {
+      // Value to write
+      int valueToWrite = 3;
+      if (shutdown)
+      {
+         valueToWrite = 4;
+      }
+
+      // Write the string value to the registry
+      result = RegSetValueEx(hKey, "launchForceExit", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+      RegCloseKey(hKey);
+   }
+   g_pvp->QuitPlayer(Player::CloseState::CS_CLOSE_APP);
+}
+
+void LiveUI::launcherSaveVersatz()
+{
+   // Launcher
+   // Open or create a key
+   HKEY hKey;
+   const char *subKey = "SOFTWARE\\Visual Pinball\\VP10\\Launcher";
+   LONG result = RegCreateKeyEx(HKEY_CURRENT_USER, subKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
+   if (result != ERROR_SUCCESS)
+   {
+      // Error creating/opening registry key
+   }
+   else
+   {
+      // Value to write
+      int valueToWrite = abs((int)launcherVersatz);
+
+      // Write the string value to the registry
+      result = RegSetValueEx(hKey, "eyeDistance", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+      if (result != ERROR_SUCCESS)
+      {
+         // Error writing to registry
+      }
+      else
+      {
+         valueToWrite = abs((int)launcherVersatzY);
+
+         // Write the string value to the registry
+         result = RegSetValueEx(hKey, "topPosition", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+         if (result != ERROR_SUCCESS)
+         {
+            // Error writing to registry
+         }
+         else
+         {
+            valueToWrite = abs((int)(launcherWindowSizeX * 100));
+
+            // Write the string value to the registry
+            result = RegSetValueEx(hKey, "overlayWidth", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+            if (result != ERROR_SUCCESS)
+            {
+               // Error writing to registry
+            }
+            else
+            {
+               valueToWrite = abs((int)(launcherWindowSizeVRx * 100));
+
+               // Write the string value to the registry
+               result = RegSetValueEx(hKey, "overlayWidthVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+               if (result != ERROR_SUCCESS)
+               {
+                  // Error writing to registry
+               }
+               else
+               {
+                  valueToWrite = abs((int)(launcherWindowTransparency * 100));
+
+                  // Write the string value to the registry
+                  if (m_player->m_stereo3D == STEREO_VR)
+                  {
+                     result = RegSetValueEx(hKey, "overlayTransparencyVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                  }
+                  else
+                  {
+                     result = RegSetValueEx(hKey, "overlayTransparency", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                  }
+
+                  if (result != ERROR_SUCCESS)
+                  {
+                     // Error writing to registry
+                  }
+                  else
+                  {
+
+
+                     valueToWrite = abs((int)(launcherWindowSizeY * 100));
+
+                     // Write the string value to the registry
+                     result = RegSetValueEx(hKey, "overlayHeight", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                     if (result != ERROR_SUCCESS)
+                     {
+                        // Error writing to registry
+                     }
+                     else
+                     {
+                        valueToWrite = abs((int)(launcherWindowSizeVRy * 100));
+
+                        // Write the string value to the registry
+                        result = RegSetValueEx(hKey, "overlayHeightVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                        if (result != ERROR_SUCCESS)
+                        {
+                           // Error writing to registry
+                        }
+                        else
+                        {
+                           valueToWrite = abs((int)(activeLayout));
+
+                           // Write the string value to the registry
+                           if (m_player->m_stereo3D == STEREO_VR)
+                           {
+                              result = RegSetValueEx(hKey, "activeLayoutVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                           }
+                           else
+                           {
+                              result = RegSetValueEx(hKey, "activeLayout", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                           }
+
+                           if (result != ERROR_SUCCESS)
+                           {
+                              // Error writing to registry
+                           }
+                           else
+                           {
+                              valueToWrite = abs((int)(launcherBgRed * 100));
+
+                              // Write the string value to the registry
+                              if (m_player->m_stereo3D == STEREO_VR)
+                              {
+                                 result = RegSetValueEx(hKey, "BGredVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                              }
+                              else
+                              {
+                                 result = RegSetValueEx(hKey, "BGred", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                              }
+                              if (result != ERROR_SUCCESS)
+                              {
+                                 // Error writing to registry
+                              }
+                              else
+                              {
+                                 valueToWrite = abs((int)(launcherBgGreen * 100));
+                                 // Write the string value to the registry
+                                 if (m_player->m_stereo3D == STEREO_VR)
+                                 {
+                                    result = RegSetValueEx(hKey, "BGgreenVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                                 }
+                                 else
+                                 {
+                                    result = RegSetValueEx(hKey, "BGgreen", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                                 }
+
+                                 if (result != ERROR_SUCCESS)
+                                 {
+                                    // Error writing to registry
+                                 }
+                                 else
+                                 {
+                                    valueToWrite = abs((int)(launcherBgBlue * 100));
+
+                                    // Write the string value to the registry
+                                    if (m_player->m_stereo3D == STEREO_VR)
+                                    {
+                                       result = RegSetValueEx(hKey, "BGblueVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                                    }
+                                    else
+                                    {
+                                       result = RegSetValueEx(hKey, "BGblue", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                                    }
+
+                                    if (result != ERROR_SUCCESS)
+                                    {
+                                       // Error writing to registry
+                                    }
+                                    else
+                                    {
+                                       valueToWrite = abs((int)(highlightChoice));
+
+                                       // Write the string value to the registry
+                                       if (m_player->m_stereo3D == STEREO_VR)
+                                       {
+                                          result = RegSetValueEx(hKey, "highlightColorVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                                       }
+                                       else
+                                       {
+                                          result = RegSetValueEx(hKey, "highlightColor", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                                       }
+
+                                       if (result != ERROR_SUCCESS)
+                                       {
+                                          // Error writing to registry
+                                       }
+                                       else
+                                       {
+                                          valueToWrite = abs((int)(fontFactor * 100));
+
+                                          // Write the string value to the registry
+                                          result = RegSetValueEx(hKey, "VRfontScale", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+
+                                          if (result != ERROR_SUCCESS)
+                                          {
+                                             // Error writing to registry
+                                          }
+                                          else
+                                          {
+                                             // Close the key
+                                             RegCloseKey(hKey);
+                                          }
+                                       }
+                                    }
+                                 }
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+}
+
+bool createOrUpdateRegistryKey(HKEY hKeyParent, const std::string &subKey, const std::string &valueName, const std::string &valueData, DWORD type)
+{
+   HKEY hKey;
+   LONG result;
+
+   // Create or open the registry key
+   result = RegCreateKeyEx(hKeyParent, subKey.c_str(), 0, nullptr, 0, KEY_WRITE, nullptr, &hKey, nullptr);
+   if (result != ERROR_SUCCESS)
+   {
+      std::cerr << "Failed to create or open registry key. Error code: " << result << std::endl;
+      return false;
+   }
+
+   // Set the value
+   result = RegSetValueEx(hKey, valueName.c_str(), 0, type, reinterpret_cast<const BYTE *>(valueData.c_str()), valueData.size() + 1);
+   if (result != ERROR_SUCCESS)
+   {
+      std::cerr << "Failed to set registry value. Error code: " << result << std::endl;
+      RegCloseKey(hKey);
+      return false;
+   }
+
+   // Close the registry key
+   RegCloseKey(hKey);
+   return true;
+}
+
+std::string getScore(const std::string &workingDir, const std::string &romname)
+{
+   // Form the command string
+   std::string cmd = workingDir + "PINemHi.exe " + toLowerCase(romname);
+   std::string output;
+
+   try
+   {
+      // Change the current directory
+      if (!SetCurrentDirectory(workingDir.c_str()))
+      {
+         throw std::runtime_error("SetCurrentDirectory failed: " + std::to_string(GetLastError()));
+      }
+
+      // Initialize variables
+      HANDLE hPipeRead, hPipeWrite;
+      SECURITY_ATTRIBUTES saAttr = { sizeof(SECURITY_ATTRIBUTES), NULL, TRUE };
+
+      // Create a pipe for the child process's STDOUT.
+      if (!CreatePipe(&hPipeRead, &hPipeWrite, &saAttr, 0))
+      {
+         throw std::runtime_error("CreatePipe failed: " + std::to_string(GetLastError()));
+      }
+
+      // Ensure the read handle to the pipe for STDOUT is not inherited.
+      SetHandleInformation(hPipeRead, HANDLE_FLAG_INHERIT, 0);
+
+      // Set up members of the PROCESS_INFORMATION structure.
+      PROCESS_INFORMATION pi = { 0 };
+
+      // Set up members of the STARTUPINFO structure.
+      STARTUPINFO si = { sizeof(STARTUPINFO) };
+      si.dwFlags = STARTF_USESTDHANDLES;
+      si.hStdOutput = hPipeWrite;
+
+      // Redirect stderr to NUL to suppress error messages
+      HANDLE hNull = CreateFile("NUL", GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+      if (hNull == INVALID_HANDLE_VALUE)
+      {
+         throw std::runtime_error("CreateFile for NUL failed: " + std::to_string(GetLastError()));
+      }
+      si.hStdError = hNull;
+
+      // Create a modifiable copy of the command string
+      std::vector<char> cmdCopy(cmd.begin(), cmd.end());
+      cmdCopy.push_back('\0');
+
+      // Create the child process.
+      if (!CreateProcess(NULL, cmdCopy.data(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, workingDir.c_str(), &si, &pi))
+      {
+         CloseHandle(hPipeRead);
+         CloseHandle(hPipeWrite);
+         CloseHandle(hNull);
+         throw std::runtime_error("CreateProcess failed: " + std::to_string(GetLastError()));
+      }
+
+      // Close the write end of the pipe before reading from the read end of the pipe.
+      CloseHandle(hPipeWrite);
+      CloseHandle(hNull);
+
+      // Read output from the child process's pipe for STDOUT
+      char buffer[128];
+      DWORD bytesRead;
+      std::string result;
+      while (ReadFile(hPipeRead, buffer, sizeof(buffer) - 1, &bytesRead, NULL))
+      {
+         if (bytesRead > 0)
+         {
+            buffer[bytesRead] = '\0';
+            result += buffer;
+         }
+         else
+         {
+            break;
+         }
+      }
+
+      // Close the read end of the pipe.
+      CloseHandle(hPipeRead);
+
+      // Wait until child process exits.
+      WaitForSingleObject(pi.hProcess, INFINITE);
+
+      // Close process and thread handles.
+      CloseHandle(pi.hProcess);
+      CloseHandle(pi.hThread);
+
+      return result;
+   }
+   catch (const std::exception &e)
+   {
+      std::cerr << "Error: " << e.what() << std::endl;
+      return "";
+   }
+}
+
+// Launcher
+class custom_thousands_sep : public std::numpunct<char>
+{
+protected:
+   virtual char do_thousands_sep() const override { return '.'; }
+
+   virtual std::string do_grouping() const override { return "\3"; }
+};
+
+std::string format_with_thousands_separator(int number)
+{
+   std::stringstream ss;
+   ss.imbue(std::locale(std::locale::classic(), new custom_thousands_sep));
+   ss << number;
+   return ss.str();
+}
+
+std::vector<std::string> split_string(const std::string &text, char delimiter)
+{
+   std::vector<std::string> tokens;
+   std::string token;
+   std::istringstream tokenStream(text);
+
+   while (std::getline(tokenStream, token, delimiter))
+   {
+      tokens.push_back(token);
+   }
+
+   return tokens;
+}
+
+bool isOnlyDigits(const std::string &str) { return std::all_of(str.begin(), str.end(), ::isdigit); }
+
+bool hasNoDigits(const std::string &str) { return std::none_of(str.begin(), str.end(), ::isdigit); }
+
+
+void LiveUI::setHighscores()
+{
+   std::string romname = g_pplayer->m_romname;
+   std::string score = "";
+
+   if (fs::exists(pinemhiPath + "PINemHi.exe") && romname != "GETROM" && romname != "VPXscore" && romname != "" && romname.find(".txt") == string::npos)
+   {
+      score = getScore(pinemhiPath, g_pplayer->m_romname + ".nv");
+      score = TrimLineBreaks(score);
+   }
+   else if (romname == "VPXscore")
+   {
+      romname = "";
+      score = g_pplayer->m_vpscore;
+      if (score != "")
+      {
+         romname = "VPXscore";
+
+         std::istringstream stream(score);
+         std::string line;
+         std::vector<std::string> validLines;
+         score = "";
+         while (std::getline(stream, line))
+         {
+            if (line.find("|") != string::npos)
+               validLines.push_back(line);
+         }
+
+         int longestScore = 0;
+         for (const auto &l : validLines)
+         {
+            std::vector<std::string> fields = split_string(l, '|');
+            fields[1] = format_with_thousands_separator(std::stoi(fields[1]));
+            if (fields[1].length() > longestScore)
+               longestScore = fields[1].length();
+         }
+
+         for (const auto &l : validLines)
+         {
+            std::vector<std::string> fields = split_string(l, '|');
+            // Check if fields have the expected number of elements
+            if (fields.size() == 3)
+            {
+               std::string filler = " ";
+               std::string scoreOutput = format_with_thousands_separator(std::stoi(fields[1]));
+
+               if (scoreOutput.length() < longestScore)
+               {
+                  filler.append(longestScore - scoreOutput.length(), ' ');
+               }
+               score += fields[0] + filler + scoreOutput + "  " + fields[2] + "\n\n";
+            }
+
+            if (fields.size() == 2)
+            {
+               std::string filler = ": ";
+               std::string scoreOutput = format_with_thousands_separator(std::stoi(fields[1]));
+
+               score += fields[0] + filler + scoreOutput + "\n\n";
+            }
+         }
+      }
+      g_pplayer->m_romname = romname;
+   }
+   else if (romname.find(".txt") != string::npos)
+   {
+      std::string userPath = exePath;
+      std::string toReplace = "vpxlauncher";
+      std::string replaceWith = "user";
+
+      size_t pos = userPath.find(toReplace);
+
+      while (pos != std::string::npos)
+      {
+         userPath.replace(pos, toReplace.length(), replaceWith);
+         pos = userPath.find(toReplace, pos + replaceWith.length());
+      }
+
+      std::string filename = userPath + '\\' + romname;
+      std::ifstream file(filename);
+
+      if (file)
+      {
+         std::stringstream buffer;
+         buffer << file.rdbuf();
+         score = buffer.str();
+         file.close();
+
+         // score manipulation
+         std::istringstream stream(score);
+         std::string line;
+         std::vector<std::string> validLines;
+
+         score = "";
+
+         // Read the lines and ignore those with fewer than 3 characters
+         int siblingLine = 0;
+         bool firstHit = false;
+         while (std::getline(stream, line))
+         {
+            if ((line.length() == 1 || line.length() == 2) && isOnlyDigits(line))
+            {
+               continue;
+            }
+            if (line.length() >= 2 && isOnlyDigits(line) && siblingLine < 5)
+            {
+               firstHit = true;
+               validLines.push_back(line);
+               siblingLine += 1;
+            }
+            else
+            {
+               if (firstHit && siblingLine == 5)
+               {
+                  if (line.length() == 3)
+                  {
+                     validLines.push_back(line);
+                  }
+               }
+            }
+         }
+
+
+         // Ensure we have at least 10 valid lines to avoid out of range errors
+         if (validLines.size() == 10)
+         {
+            // Initialize scores array with a size that can hold our scores
+            std::vector<Score> scores_array;
+
+            // Extract the next 5 lines as "value"
+            for (size_t i = 0; i < 5; ++i)
+            {
+               scores_array.push_back({ "HighScore " + std::to_string(i + 1), format_with_thousands_separator(std::stoi(validLines[i])), "" });
+            }
+
+            // Extract the next 5 lines as "name"
+            for (size_t i = 5; i < 10; ++i)
+            {
+               scores_array[i - 5].name = validLines[i];
+            }
+
+            int longestScore = 0;
+            for (const auto &t_score : scores_array)
+            {
+               if (t_score.value.length() > longestScore)
+                  longestScore = t_score.value.length();
+            }
+
+            if (longestScore < 14)
+               longestScore = 14;
+
+            // Output the results
+            for (const auto &t_score : scores_array)
+            {
+               std::string scoreOutput = t_score.value;
+               string filler = "";
+
+               if (scoreOutput.length() < longestScore)
+               {
+                  filler.append(longestScore - scoreOutput.length(), ' ');
+               }
+               score += t_score.header + filler + scoreOutput + "  " + t_score.name + "\n\n";
+            }
+         }
+         else
+         {
+            score = buffer.str();
+         }
+      }
+      else
+      {
+         score = "";
+         romname = "";
+         g_pplayer->m_romname = "";
+      }
+   }
+
+
+   std::string baseSubKey = "SOFTWARE\\Visual Pinball\\VP10\\Launcher\\Highscores";
+   std::string filename = string(m_live_table->m_szFileName); // Subkey under which values will be stored
+
+
+   std::string fullSubKey = baseSubKey + "\\" + replaceBackslashesWithForwardSlashes(filename);
+
+   if (romname != "")
+   {
+      // Store the score
+      if (createOrUpdateRegistryKey(HKEY_CURRENT_USER, fullSubKey, "scores", score, REG_SZ))
+      {
+         std::cout << "Successfully added or updated 'score' value." << std::endl;
+      }
+
+      // Store the ROM name
+      if (createOrUpdateRegistryKey(HKEY_CURRENT_USER, fullSubKey, "romname", romname, REG_SZ))
+      {
+         std::cout << "Successfully added or updated 'romname' value." << std::endl;
+      }
+
+      // update livedata
+      if (m_player->m_launcherActive)
+         CheckFilesWithTables(m_live_table->m_szFileName);
+   }
+}
+
+
+void LiveUI::launcherLoadFontscale()
+{
+   // Launcher
+   // Open the key
+   HKEY hKey;
+   const char *subKey = "SOFTWARE\\Visual Pinball\\VP10\\Launcher";
+   LONG result = RegOpenKeyEx(HKEY_CURRENT_USER, subKey, 0, KEY_READ, &hKey);
+   if (result != ERROR_SUCCESS)
+   {
+      // Error opening registry key
+   }
+   else
+   {
+      // Variable to store the value read from registry
+      DWORD valueRead;
+      DWORD type = REG_DWORD;
+      DWORD valueSize = sizeof(valueRead);
+
+      result = RegQueryValueEx(hKey, "VRfontScale", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+
+      if (result != ERROR_SUCCESS)
+      {
+         // Error reading from registry
+         // Close the key
+         RegCloseKey(hKey);
+      }
+      else
+      {
+         fontFactor = static_cast<float>(valueRead);
+         if (fontFactor >= 30)
+         {
+            fontFactor = fontFactor / 100;
+         }
+         else
+         {
+            fontFactor = 1.0f;
+         }
+
+
+         // Close the key
+         RegCloseKey(hKey);
+      }
+   }
+}
+
+void LiveUI::launcherSaveFilter()
+{
+   // Launcher
+   // Open or create a key
+   HKEY hKey;
+   const char *subKey = "SOFTWARE\\Visual Pinball\\VP10\\Launcher";
+   LONG result = RegCreateKeyEx(HKEY_CURRENT_USER, subKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
+   if (result != ERROR_SUCCESS)
+   {
+      // Error creating/opening registry key
+   }
+   else
+   {
+      // Value to write
+      int valueToWrite = (int)filters[activeFilter].id;
+
+      // Write the string value to the registry
+      if (activeSetup == 1)
+      {
+         result = RegSetValueEx(hKey, "activeFilter1", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+      }
+      else
+      {
+         result = RegSetValueEx(hKey, "activeFilter", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+      }
+
+      if (result != ERROR_SUCCESS)
+      {
+         // Error writing to registry
+      }
+      else
+      {
+         // Close the key
+         RegCloseKey(hKey);
+      }
+   }
+}
+
+void LiveUI::launcherLoadFilter()
+{
+   // Launcher
+   // Open the key
+   HKEY hKey;
+   const char *subKey = "SOFTWARE\\Visual Pinball\\VP10\\Launcher";
+   LONG result = RegOpenKeyEx(HKEY_CURRENT_USER, subKey, 0, KEY_READ, &hKey);
+   if (result != ERROR_SUCCESS)
+   {
+      // Error opening registry key
+   }
+   else
+   {
+      // Variable to store the value read from registry
+      DWORD valueRead;
+      DWORD type = REG_DWORD;
+      DWORD valueSize = sizeof(valueRead);
+
+      // Read the DWORD value from the registry
+      if (activeSetup == 1)
+      {
+         result = RegQueryValueEx(hKey, "activeFilter1", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+      }
+      else
+      {
+         result = RegQueryValueEx(hKey, "activeFilter", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+      }
+
+      if (result != ERROR_SUCCESS)
+      {
+         // Error reading from registry
+         activeFilter = 0;
+      }
+      else
+      {
+         // Successfully read the value, now assign it to the corresponding class member
+         activeFilter = static_cast<float>(valueRead);
+
+         if (activeFilter > filters.size() + 1)
+         {
+            activeFilter = 0;
+         }
+
+
+         // Close the key
+         RegCloseKey(hKey);
+      }
+   }
+}
+
+
 void LiveUI::OpenTweakMode()
 {
-   m_ShowUI = false;
-   m_ShowSplashModal = false;
-   m_player->DisableStaticPrePass(true);
-   m_tweakMode = true;
-   m_activeTweakPage = m_table->m_szRules.empty() ? (m_player->m_stereo3D == STEREO_VR ? TP_TableOption : TP_PointOfView) : TP_Rules;
-   m_activeTweakIndex = 0;
-   m_VRTweakUI_X = g_pvp->m_settings.LoadValueWithDefault(Settings::PlayerVR, "TweakUI_X"s, 450);
-   m_VRTweakUI_Y = g_pvp->m_settings.LoadValueWithDefault(Settings::PlayerVR, "TweakUI_Y"s, 300);
+
+
+
+   if (m_player->m_launcherActive)
+   {
+
+      m_VRTweakUI_X = g_pvp->m_settings.LoadValueWithDefault(Settings::PlayerVR, "TweakUI_X"s, 450);
+      m_VRTweakUI_Y = g_pvp->m_settings.LoadValueWithDefault(Settings::PlayerVR, "TweakUI_Y"s, 300);
+
+
+      pinemhiPath = launcherReadRegistry("pinemhiPath");
+      pinemhiPath = ensureTrailingBackslash(pinemhiPath);
+
+      exePath = launcherReadRegistry("exePath");
+      exePath = ensureTrailingBackslash(exePath);
+
+      if (activeSetup == 1)
+      {
+         tablePath = launcherReadRegistry("altTablePath");
+      }
+      else
+      {
+         tablePath = launcherReadRegistry("tablePath");
+      }
+      tablePath = ensureTrailingBackslash(tablePath);
+
+      launcherUpdateInfo = launcherReadRegistry("updateInfo");
+
+      if (launcherReadRegistry("startKey") != "")
+         launcherStartKey = launcherReadRegistry("startKey");
+      if (launcherReadRegistry("filterKey") != "")
+         launcherFilterKey = launcherReadRegistry("filterKey");
+      if (launcherReadRegistry("settingsKey") != "")
+         launcherSettingsKey = launcherReadRegistry("settingsKey");
+      if (launcherReadRegistry("upKey") != "")
+         launcherUpKey = launcherReadRegistry("upKey");
+      if (launcherReadRegistry("downKey") != "")
+         launcherDownKey = launcherReadRegistry("downKey");
+      if (launcherReadRegistry("randomizeKey") != "")
+         launcherRandomizeKey = launcherReadRegistry("randomizeKey");
+      if (launcherReadRegistry("favoriteKey") != "")
+         launcherFavoriteKey = launcherReadRegistry("favoriteKey");
+      if (launcherReadRegistry("leftKey") != "")
+         launcherLeftKey = launcherReadRegistry("leftKey");
+      if (launcherReadRegistry("rightKey") != "")
+         launcherRightKey = launcherReadRegistry("rightKey");
+      if (launcherReadRegistry("jumpupKey") != "")
+         launcherJumpUpKey = launcherReadRegistry("jumpupKey");
+      if (launcherReadRegistry("jumpdownKey") != "")
+         launcherJumpUpKey = launcherReadRegistry("jumpdownKey");
+
+      loadMarkerFromRegistry();
+
+      if (exePath != "" && tablePath != "" && !launcherReady)
+      {
+
+         if (fs::exists(exePath + "\\tables.csv"))
+         {
+
+
+            if (fs::exists(exePath + "\\tables.live.csv") && launcherAutoupdate)
+            {
+               // Load CSV file into array of objects
+               LoadCSV(exePath + "\\tables.live.csv");
+            }
+            else
+            {
+               // Load CSV file into array of objects
+               LoadCSV(exePath + "\\tables.csv");
+            }
+
+
+            // Call the function to load files and set active flag
+            LoadFilesWithExtension(tablePath, ".vpx");
+
+            LoadFilter();
+
+            while (filters.size() < filterItems + 2)
+            {
+               // Double the filters by appending the same vector to itself
+               filters.insert(filters.end(), filters.begin(), filters.end());
+            }
+
+            launcherLoadFilter();
+
+            // check filearray against tabledata
+            if (!CheckFilesWithTables(m_live_table->m_szFileName))
+            {
+               activeFilter = 0;
+               CheckFilesWithTables(m_live_table->m_szFileName);
+            }
+
+            if (fs::exists(exePath + "\\tables"))
+            {
+               renderTables = true;
+            }
+
+            if (fs::exists(exePath + "\\wheels"))
+            {
+               renderWheels = true;
+            }
+
+
+            launcherReady = true;
+         }
+      }
+      m_ShowUI = false;
+      m_ShowSplashModal = false;
+      m_player->DisableStaticPrePass(true);
+      m_tweakMode = true;
+      m_activeTweakPage = TP_Launcher; // Launcher
+      m_activeTweakIndex = 0;
+   }
+   else
+   {
+
+      m_ShowUI = false;
+      m_ShowSplashModal = false;
+      m_player->DisableStaticPrePass(true);
+      m_tweakMode = true;
+      m_activeTweakPage = m_table->m_szRules.empty() ? (m_player->m_stereo3D == STEREO_VR ? TP_TableOption : TP_PointOfView) : TP_Rules;
+      m_activeTweakIndex = 0;
+      m_VRTweakUI_X = g_pvp->m_settings.LoadValueWithDefault(Settings::PlayerVR, "TweakUI_X"s, 450);
+      m_VRTweakUI_Y = g_pvp->m_settings.LoadValueWithDefault(Settings::PlayerVR, "TweakUI_Y"s, 300);
+   }
+
+
+
    UpdateTweakPage();
 }
 
@@ -2529,10 +3454,36 @@ void LiveUI::CloseTweakMode()
    if (m_tweakMode)
       m_live_table->FireKeyEvent(DISPID_GameEvents_OptionEvent, 3 /* tweak mode closed event */);
    m_tweakMode = false;
+   // Launcher
+   saveHighscore = true;
 }
 
 void LiveUI::UpdateTweakPage()
 {
+
+   // Launcher
+   swapImage = true;
+   launcherLastHeight = 0;
+
+
+   if (saveHighscore)
+   {
+      saveHighscore = false;
+      setHighscores();
+   }
+
+   // load logo
+   string imagefilename = exePath + "data\\resdata.dat";
+   myLogoTextureID = LoadImageSpecial(imagefilename.c_str(), 159, 24);
+
+   // load dummy wheelart
+   imagefilename = exePath + "data\\dummy.dat";
+   myDummyTextureID = LoadImageSpecial(imagefilename.c_str(), imageSize, imageSize);
+   imagefilename = exePath + "data\\dummyBig.dat";
+   myDummyBigTextureID = LoadImageSpecial(imagefilename.c_str(), imageBigSizeX, imageBigSizeY);
+   imagefilename = exePath + "data\\tableBack.dat";
+   myTextureBackID = LoadImageSpecial(imagefilename.c_str(), imageBigSizeY, imageBigSizeY);
+
    m_tweakPageOptions.clear();
    m_tweakPageOptions.push_back(BS_Page);
    switch (m_activeTweakPage)
@@ -2555,6 +3506,7 @@ void LiveUI::UpdateTweakPage()
       m_tweakPageOptions.push_back(BS_TweakUI_Y);
       break;
    }
+   case TP_Launcher: break; // Launcher
    case TP_Info:
    case TP_Rules:
       break;

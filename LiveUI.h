@@ -212,6 +212,12 @@ private:
    ImFont *m_baseFont = nullptr;
    ImFont *m_overlayBoldFont = nullptr;
    ImFont *m_overlayFont = nullptr;
+
+   // Launcher
+   ImFont *m_digitalFont = nullptr;
+   ImFont *m_digitalBigFont = nullptr;
+   ImFont *m_highscoreFont = nullptr;
+
    float m_menubar_height = 0.0f;
    float m_toolbar_height = 0.0f;
 
