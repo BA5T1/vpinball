@@ -771,6 +771,172 @@ static void HelpEditableHeader(bool is_live, IEditable *editable, IEditable *liv
    ImGui::Separator();
 }
 
+static void oldLoadFilesWithExtension(const std::string &path, const std::string &extension) // Launcher
+{
+
+   fileObjects.clear(); // Clear previous data
+   try
+   {
+      if (fs::exists(path) && fs::is_directory(path))
+      {
+         for (auto &entry : fs::directory_iterator(path))
+         {
+            if (entry.is_regular_file() && entry.path().extension() == extension)
+            {
+               std::string filename = entry.path().string();
+               FileInfo fobj;
+               fobj.filename = filename;
+               try
+               {
+                  fobj.creation_date = std::filesystem::last_write_time(filename);
+               }
+               catch (const std::filesystem::filesystem_error &e)
+               {
+                  // Set creation_date to 1970-01-01 if there's an error
+                  fobj.creation_date = std::filesystem::file_time_type(std::chrono::seconds(0));
+               }
+
+               fileObjects.push_back(fobj);
+            }
+         }
+      }
+      else
+      {
+         std::cerr << "Directory does not exist." << std::endl;
+         return;
+      }
+   }
+   catch (const fs::filesystem_error &e)
+   {
+      std::cerr << "Error: " << e.what() << std::endl;
+   }
+}
+
+bool matchesFilter(const std::string &filename)
+{
+   bool returnValue = false;
+   try
+   {
+      // Create a regular expression pattern to match the filename
+      std::regex pattern(filters[filters[activeFilter].id].needed);
+
+      // Check if the filename matches the pattern
+      if (std::regex_search(filename, pattern))
+      {
+         returnValue = true;
+      }
+      else
+      {
+         returnValue = false;
+      }
+   }
+   catch (const std::regex_error &e)
+   {
+      activeFilter = 0;
+      returnValue = true;
+   }
+
+
+   return returnValue;
+}
+
+
+void synchronizeMarkerWithFileSystem()
+{
+   for (auto it = markedFiles.begin(); it != markedFiles.end();)
+   {
+      if (!std::filesystem::exists(*it))
+      {
+         it = markedFiles.erase(it);
+      }
+      else
+      {
+         ++it;
+      }
+   }
+}
+
+bool isFileMarked(const std::string &filename) { return markedFiles.find(filename) != markedFiles.end(); }
+
+void saveMarkerToRegistry()
+{
+   HKEY hKey;
+
+   std::wstring REGISTRY_PATH = L"SOFTWARE\\Visual Pinball\\VP10\\Launcher\\Favorites";
+
+   if (activeSetup == 1)
+   {
+      REGISTRY_PATH = L"SOFTWARE\\Visual Pinball\\VP10\\Launcher\\altFavorites";
+   }
+
+   RegDeleteKeyW(HKEY_CURRENT_USER, REGISTRY_PATH.c_str());
+
+   if (RegCreateKeyExW(HKEY_CURRENT_USER, REGISTRY_PATH.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_SUCCESS)
+   {
+      for (const auto &file : markedFiles)
+      {
+         std::wstring wFile(file.begin(), file.end());
+         RegSetValueExW(hKey, wFile.c_str(), 0, REG_SZ, (const BYTE *)wFile.c_str(), (wFile.size() + 1) * sizeof(wchar_t));
+      }
+      RegCloseKey(hKey);
+   }
+}
+
+bool markFile(const std::string &filename)
+{
+   if (markedFiles.find(filename) != markedFiles.end())
+   {
+      markedFiles.erase(filename);
+      currentObjects[currentSelection].favorite = false;
+      saveMarkerToRegistry();
+      return true;
+   }
+   else if (std::filesystem::exists(filename))
+   {
+      markedFiles.insert(filename);
+      currentObjects[currentSelection].favorite = true;
+      saveMarkerToRegistry();
+      return true;
+   }
+   return false;
+}
+
+void loadMarkerFromRegistry()
+{
+   HKEY hKey;
+   std::wstring REGISTRY_PATH = L"SOFTWARE\\Visual Pinball\\VP10\\Launcher\\Favorites";
+
+   if (activeSetup == 1)
+   {
+      REGISTRY_PATH = L"SOFTWARE\\Visual Pinball\\VP10\\Launcher\\altFavorites";
+   }
+
+   if (RegOpenKeyExW(HKEY_CURRENT_USER, REGISTRY_PATH.c_str(), 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+   {
+      DWORD index = 0;
+      wchar_t valueName[256];
+      DWORD valueNameSize = sizeof(valueName) / sizeof(valueName[0]);
+      DWORD type;
+      BYTE data[256];
+      DWORD dataSize = sizeof(data);
+
+      while (RegEnumValueW(hKey, index, valueName, &valueNameSize, NULL, &type, data, &dataSize) == ERROR_SUCCESS)
+      {
+         if (type == REG_SZ)
+         {
+            std::wstring wValueName(valueName, valueNameSize);
+            std::string valueNameStr(wValueName.begin(), wValueName.end());
+            markedFiles.insert(valueNameStr);
+         }
+         index++;
+         valueNameSize = sizeof(valueName) / sizeof(valueName[0]);
+         dataSize = sizeof(data);
+      }
+      RegCloseKey(hKey);
+   }
+}
+
+
 // Comparator function for sorting by creation_date
 bool compareByCreationDate(const FileInfo &a, const FileInfo &b)
 {
