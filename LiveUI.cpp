@@ -187,8 +187,6 @@ static bool saveHighscore = true;
 static bool launcherReady = false;
 static int activeSetup = 0;
 
-float launcherVersatz = 380.0f;
-float launcherVersatzY = 200.0f;
 float launcherWindowSizeX = 0.75f;
 float launcherWindowSizeY = 0.8f;
 float launcherWindowSizeVRx = 1.0f;
@@ -2607,217 +2605,6 @@ void LiveUI::closeVPX(bool shutdown)
    g_pvp->QuitPlayer(Player::CloseState::CS_CLOSE_APP);
 }
 
-void LiveUI::launcherSaveVersatz()
-{
-   // Launcher
-   // Open or create a key
-   HKEY hKey;
-   const char *subKey = "SOFTWARE\\Visual Pinball\\VP10\\Launcher";
-   LONG result = RegCreateKeyEx(HKEY_CURRENT_USER, subKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
-   if (result != ERROR_SUCCESS)
-   {
-      // Error creating/opening registry key
-   }
-   else
-   {
-      // Value to write
-      int valueToWrite = abs((int)launcherVersatz);
-
-      // Write the string value to the registry
-      result = RegSetValueEx(hKey, "eyeDistance", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-      if (result != ERROR_SUCCESS)
-      {
-         // Error writing to registry
-      }
-      else
-      {
-         valueToWrite = abs((int)launcherVersatzY);
-
-         // Write the string value to the registry
-         result = RegSetValueEx(hKey, "topPosition", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-         if (result != ERROR_SUCCESS)
-         {
-            // Error writing to registry
-         }
-         else
-         {
-            valueToWrite = abs((int)(launcherWindowSizeX * 100));
-
-            // Write the string value to the registry
-            result = RegSetValueEx(hKey, "overlayWidth", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-            if (result != ERROR_SUCCESS)
-            {
-               // Error writing to registry
-            }
-            else
-            {
-               valueToWrite = abs((int)(launcherWindowSizeVRx * 100));
-
-               // Write the string value to the registry
-               result = RegSetValueEx(hKey, "overlayWidthVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-               if (result != ERROR_SUCCESS)
-               {
-                  // Error writing to registry
-               }
-               else
-               {
-                  valueToWrite = abs((int)(launcherWindowTransparency * 100));
-
-                  // Write the string value to the registry
-                  if (m_player->m_stereo3D == STEREO_VR)
-                  {
-                     result = RegSetValueEx(hKey, "overlayTransparencyVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                  }
-                  else
-                  {
-                     result = RegSetValueEx(hKey, "overlayTransparency", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                  }
-
-                  if (result != ERROR_SUCCESS)
-                  {
-                     // Error writing to registry
-                  }
-                  else
-                  {
-
-
-                     valueToWrite = abs((int)(launcherWindowSizeY * 100));
-
-                     // Write the string value to the registry
-                     result = RegSetValueEx(hKey, "overlayHeight", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                     if (result != ERROR_SUCCESS)
-                     {
-                        // Error writing to registry
-                     }
-                     else
-                     {
-                        valueToWrite = abs((int)(launcherWindowSizeVRy * 100));
-
-                        // Write the string value to the registry
-                        result = RegSetValueEx(hKey, "overlayHeightVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                        if (result != ERROR_SUCCESS)
-                        {
-                           // Error writing to registry
-                        }
-                        else
-                        {
-                           valueToWrite = abs((int)(activeLayout));
-
-                           // Write the string value to the registry
-                           if (m_player->m_stereo3D == STEREO_VR)
-                           {
-                              result = RegSetValueEx(hKey, "activeLayoutVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                           }
-                           else
-                           {
-                              result = RegSetValueEx(hKey, "activeLayout", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                           }
-
-                           if (result != ERROR_SUCCESS)
-                           {
-                              // Error writing to registry
-                           }
-                           else
-                           {
-                              valueToWrite = abs((int)(launcherBgRed * 100));
-
-                              // Write the string value to the registry
-                              if (m_player->m_stereo3D == STEREO_VR)
-                              {
-                                 result = RegSetValueEx(hKey, "BGredVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                              }
-                              else
-                              {
-                                 result = RegSetValueEx(hKey, "BGred", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                              }
-                              if (result != ERROR_SUCCESS)
-                              {
-                                 // Error writing to registry
-                              }
-                              else
-                              {
-                                 valueToWrite = abs((int)(launcherBgGreen * 100));
-                                 // Write the string value to the registry
-                                 if (m_player->m_stereo3D == STEREO_VR)
-                                 {
-                                    result = RegSetValueEx(hKey, "BGgreenVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                                 }
-                                 else
-                                 {
-                                    result = RegSetValueEx(hKey, "BGgreen", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                                 }
-
-                                 if (result != ERROR_SUCCESS)
-                                 {
-                                    // Error writing to registry
-                                 }
-                                 else
-                                 {
-                                    valueToWrite = abs((int)(launcherBgBlue * 100));
-
-                                    // Write the string value to the registry
-                                    if (m_player->m_stereo3D == STEREO_VR)
-                                    {
-                                       result = RegSetValueEx(hKey, "BGblueVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                                    }
-                                    else
-                                    {
-                                       result = RegSetValueEx(hKey, "BGblue", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                                    }
-
-                                    if (result != ERROR_SUCCESS)
-                                    {
-                                       // Error writing to registry
-                                    }
-                                    else
-                                    {
-                                       valueToWrite = abs((int)(highlightChoice));
-
-                                       // Write the string value to the registry
-                                       if (m_player->m_stereo3D == STEREO_VR)
-                                       {
-                                          result = RegSetValueEx(hKey, "highlightColorVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                                       }
-                                       else
-                                       {
-                                          result = RegSetValueEx(hKey, "highlightColor", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-                                       }
-
-                                       if (result != ERROR_SUCCESS)
-                                       {
-                                          // Error writing to registry
-                                       }
-                                       else
-                                       {
-                                          valueToWrite = abs((int)(fontFactor * 100));
-
-                                          // Write the string value to the registry
-                                          result = RegSetValueEx(hKey, "VRfontScale", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
-
-                                          if (result != ERROR_SUCCESS)
-                                          {
-                                             // Error writing to registry
-                                          }
-                                          else
-                                          {
-                                             // Close the key
-                                             RegCloseKey(hKey);
-                                          }
-                                       }
-                                    }
-                                 }
-                              }
-                           }
-                        }
-                     }
-                  }
-               }
-            }
-         }
-      }
-   }
-}
-
 bool createOrUpdateRegistryKey(HKEY hKeyParent, const std::string &subKey, const std::string &valueName, const std::string &valueData, DWORD type)
 {
    HKEY hKey;
@@ -3602,7 +3389,6 @@ void LiveUI::OnTweakModeEvent(const int keyEvent, const int keycode)
             if (setupMode)
             {
                setupMode = false;
-               launcherSaveVersatz();
                swapImage = true;
             }
             else
@@ -3710,17 +3496,14 @@ void LiveUI::OnTweakModeEvent(const int keyEvent, const int keycode)
             keyHoldTimer = 0; // Reset timer when key is pressed
             // Immediate response when key is pressed
             // Update selection based on which key was pressed or held
-            if (setupModeValue == 0 && m_player->m_stereo3D == STEREO_VR)
-               launcherVersatz = launcherVersatz - 1.0f;
+
             if (setupModeValue == 1 && m_player->m_stereo3D == STEREO_VR)
             {
                fontFactor = fontFactor - 0.01f;
                if (fontFactor < 0.3f)
                   fontFactor = 0.3f;
             }
-            if (setupModeValue == 2 && m_player->m_stereo3D == STEREO_VR)
-               if (launcherVersatzY > 1.0f)
-                  launcherVersatzY = launcherVersatzY - 1.0f;
+
             if (setupModeValue == 5)
             {
                if (launcherWindowSizeX > 0.2)
@@ -3851,17 +3634,14 @@ void LiveUI::OnTweakModeEvent(const int keyEvent, const int keycode)
                keyHoldTimer -= keyHoldDelay;
                // Respond to key hold by updating selection repeatedly
                // Update selection based on which key was pressed or held
-               if (setupModeValue == 0 && m_player->m_stereo3D == STEREO_VR)
-                  launcherVersatz = launcherVersatz - 1.0f;
+
                if (setupModeValue == 1 && m_player->m_stereo3D == STEREO_VR)
                {
                   fontFactor = fontFactor - 0.01f;
                   if (fontFactor < 0.3f)
                      fontFactor = 0.3f;
                }
-               if (setupModeValue == 2 && m_player->m_stereo3D == STEREO_VR)
-                  if (launcherVersatzY > 1.0f)
-                     launcherVersatzY = launcherVersatzY - 1.0f;
+
                if (setupModeValue == 5)
                {
                   if (launcherWindowSizeX > 0.2)
@@ -3933,19 +3713,12 @@ void LiveUI::OnTweakModeEvent(const int keyEvent, const int keycode)
             keyHoldTimer = 0; // Reset timer when key is pressed
             // Immediate response when key is pressed
             // Update selection based on which key was pressed or held
-            if (setupModeValue == 0 && m_player->m_stereo3D == STEREO_VR)
-            {
-               launcherVersatz = launcherVersatz + 1.0f;
-            }
+
             if (setupModeValue == 1 && m_player->m_stereo3D == STEREO_VR)
             {
                fontFactor = fontFactor + 0.01f;
             }
-            if (setupModeValue == 2 && m_player->m_stereo3D == STEREO_VR)
-            {
-               if (launcherVersatzY < 400.0f)
-                  launcherVersatzY = launcherVersatzY + 1.0f;
-            }
+
             if (setupModeValue == 5)
             {
                if (launcherWindowSizeX < 1.5)
@@ -4074,19 +3847,12 @@ void LiveUI::OnTweakModeEvent(const int keyEvent, const int keycode)
                keyHoldTimer -= keyHoldDelay;
                // Respond to key hold by updating selection repeatedly
                // Update selection based on which key was pressed or held
-               if (setupModeValue == 0 && m_player->m_stereo3D == STEREO_VR)
-               {
-                  launcherVersatz = launcherVersatz + 1.0f;
-               }
+
                if (setupModeValue == 1 && m_player->m_stereo3D == STEREO_VR)
                {
                   fontFactor = fontFactor + 0.01f;
                }
-               if (setupModeValue == 2 && m_player->m_stereo3D == STEREO_VR)
-               {
-                  if (launcherVersatzY < 400.0f)
-                     launcherVersatzY = launcherVersatzY + 1.0f;
-               }
+
                if (setupModeValue == 5)
                {
                   if (launcherWindowSizeX < 1.5)
@@ -5144,7 +4910,7 @@ void LiveUI::UpdateTweakModeUI()
                   }
                   ImGui::TextColored(markercolor, "==> ");
                   ImGui::SameLine();
-                  ImGui::TextColored(textcolor, "EyeDistance VR ... %d", (int)launcherVersatz);
+                  ImGui::TextColored(textcolor, "EyeDistance VR ... disabled");
 
 
                   ImGui::SetCursorPosX(200);
@@ -5176,7 +4942,7 @@ void LiveUI::UpdateTweakModeUI()
                   }
                   ImGui::TextColored(markercolor, "==> ");
                   ImGui::SameLine();
-                  ImGui::TextColored(textcolor, "TopPosition VR ... %d %%", (int)(launcherVersatzY / 400 * 100));
+                  ImGui::TextColored(textcolor, "TopPosition VR ... disabled");
 
 
                   ImGui::SetCursorPosX(200);
@@ -7518,6 +7284,7 @@ void LiveUI::UpdateMainSplashModal()
       if (m_player->m_stereo3D != STEREO_VR && ImGui::Button("Table Options", size))
       {
          ImGui::CloseCurrentPopup();
+         m_player->m_launcherActive = false; // Launcher
          OpenTweakMode();
       }
       bool popup_headtracking = false;
