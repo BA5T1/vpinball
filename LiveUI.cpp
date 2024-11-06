@@ -771,6 +771,157 @@ static void HelpEditableHeader(bool is_live, IEditable *editable, IEditable *liv
    ImGui::Separator();
 }
 
+// Function to split a string by comma
+std::vector<std::string> SplitString(const std::string &str, char delimiter) // Launcher
+{
+   std::vector<std::string> tokens;
+   std::string token;
+   std::istringstream tokenStream(str);
+   while (std::getline(tokenStream, token, delimiter))
+   {
+      tokens.push_back(token);
+   }
+   return tokens;
+}
+
+// Function to load CSV file into an array of objects
+std::vector<std::string> custom_split(const std::string &s) // Launcher
+{
+   std::vector<std::string> tokens;
+   std::istringstream stream(s);
+   std::string token;
+   bool inQuotes = false;
+   char currentChar;
+
+   while (stream.get(currentChar))
+   {
+      if (currentChar == '"')
+      {
+         inQuotes = !inQuotes;
+      }
+      else if (currentChar == ',' && !inQuotes)
+      {
+         tokens.push_back(token);
+         token = "";
+      }
+      else
+      {
+         token += currentChar;
+      }
+   }
+   tokens.push_back(token); // Add the last token after the loop
+
+   // Padding the vector to ensure it contains exactly five tokens
+   while (tokens.size() < 5)
+   {
+      tokens.push_back(""); // Add empty string for missing data
+   }
+   return tokens;
+}
+
+
+void SavePartiallyEncryptedImage(const char *inputFilename, const char *outputFilename)
+{
+   // Read the entire file into memory
+   std::ifstream inFile(inputFilename, std::ios::binary);
+   if (!inFile)
+   {
+      std::cerr << "Error opening input file: " << inputFilename << std::endl;
+      return;
+   }
+   std::vector<BYTE> data((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+   inFile.close();
+
+   // Encrypt the first 100 bytes of the data
+   if (data.size() >= 100)
+   {
+      std::vector<BYTE> header(data.begin(), data.begin() + 100);
+      XORCipher(header);
+      std::copy(header.begin(), header.end(), data.begin());
+   }
+
+   // Save encrypted data to a new file
+   std::ofstream outFile(outputFilename, std::ios::binary);
+   if (!outFile)
+   {
+      std::cerr << "Error opening output file: " << outputFilename << std::endl;
+      return;
+   }
+   outFile.write(reinterpret_cast<const char *>(data.data()), data.size());
+   outFile.close();
+}
+
+void encryptTableImages()
+{
+   std::string path = exePath + "convert\\";
+   if (fs::exists(path) && fs::is_directory(path))
+   {
+      for (auto &entry : fs::directory_iterator(path))
+      {
+         if (entry.is_regular_file() && entry.path().extension() == ".png")
+         {
+            std::string imagefilenameIn = entry.path().string();
+            std::string imagefilenameOut = imagefilenameIn.substr(0, imagefilenameIn.find_last_of('.')) + ".dat";
+
+            if (!std::filesystem::exists(imagefilenameOut))
+            {
+               SavePartiallyEncryptedImage(imagefilenameIn.c_str(), imagefilenameOut.c_str());
+            }
+         }
+      }
+   }
+}
+
+void LoadCSV(const std::string &filename) // Launcher
+{
+   tableObjects.clear(); // Clear previous data
+
+   std::ifstream file(filename);
+
+   if (!file.is_open())
+   {
+      std::cerr << "Failed to open file: " << filename << std::endl;
+      return;
+      // Return empty vector
+   }
+
+   std::string line;
+   // Skip the header line if it exists
+   std::getline(file, line);
+
+   while (std::getline(file, line))
+   {
+      auto tokens = custom_split(line);
+      if (tokens.size() == 6)
+      {
+         TableInfo obj;
+         obj.name = tokens[0];
+         obj.display = tokens[1];
+         obj.manufacturer = tokens[2];
+         obj.needed = tokens[3];
+         obj.forbidden = tokens[4];
+         obj.highscoreFile = tokens[5];
+         tableObjects.push_back(obj);
+      }
+   }
+
+   file.close();
+}
+
+// Funktion, die einen String in Kleinbuchstaben umwandelt
+std::string toLowerCase(const std::string &input) // Launcher
+{
+   std::string result;
+   result.reserve(input.size()); // Reservieren Sie Speicherplatz für das Ergebnis
+
+   for (char c : input)
+   {
+      result.push_back(std::tolower(static_cast<unsigned char>(c))); // Jedes Zeichen konvertieren
+   }
+
+   return result;
+}
+
 // Check if filename contains all words in requiredWords and none of the words in forbiddenWords
 bool CheckFilename(const std::string &filename, const std::string &nameWords, const std::string &requiredWords, const std::string &forbiddenWords) // Launcher
 {
