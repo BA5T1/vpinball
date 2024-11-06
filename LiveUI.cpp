@@ -771,6 +771,128 @@ static void HelpEditableHeader(bool is_live, IEditable *editable, IEditable *liv
    ImGui::Separator();
 }
 
+
+
+std::string processNVRAMString(const std::string &input)
+{
+   std::stringstream ss(input);
+   std::string line;
+   std::vector<std::string> lines;
+   std::string result;
+   int spaceReduction = 0;
+   bool firstLine = true;
+   std::regex spacesRegex(" {4,}");
+
+   while (std::getline(ss, line, '\r'))
+   {
+      std::smatch match;
+      if (std::regex_search(line, match, spacesRegex))
+      {
+         int spaceCount = match[0].length();
+         int adjustedSpaceCount = firstLine ? spaceCount : spaceCount - spaceReduction;
+         int reducedSpaces = std::max(adjustedSpaceCount - 2, 0);
+         spaceReduction = firstLine && reducedSpaces > 0 ? adjustedSpaceCount - 2 : spaceReduction;
+         line.replace(match.position(0), spaceCount, std::string(spaceCount - spaceReduction, ' '));
+         firstLine = false;
+      }
+      else
+      {
+         spaceReduction = 0;
+         firstLine = true;
+      }
+      lines.push_back(line);
+   }
+
+   for (size_t i = 0; i < lines.size(); ++i)
+   {
+      result += lines[i];
+   }
+
+   return result;
+}
+
+
+std::string getHighscore(const std::string &filename)
+{
+
+   std::string sanitizedFilename = replaceBackslashesWithForwardSlashes(filename);
+   std::string subkey = "SOFTWARE\\Visual Pinball\\VP10\\Launcher\\Highscores\\" + sanitizedFilename;
+
+   // Launcher Settings from registry
+   DWORD dwType = REG_SZ;
+   HKEY hKey = 0;
+   char value[1024];
+   DWORD value_length = 1024;
+
+   LONG result = RegOpenKey(HKEY_CURRENT_USER, subkey.c_str(), &hKey);
+   if (result != ERROR_SUCCESS)
+   {
+      //Failed to open registry key.
+      return "";
+   }
+
+   result = RegQueryValueEx(hKey, "scores", NULL, &dwType, (LPBYTE)&value, &value_length);
+   if (result != ERROR_SUCCESS)
+   {
+      // Failed to read registry value.
+      RegCloseKey(hKey);
+      return "";
+   }
+
+   // Close the registry key
+   RegCloseKey(hKey);
+
+   std::string output = "";
+
+   //output = processNVRAMString(value);
+   output = value;
+
+   return std::string(output);
+}
+
+// Function to load files and set currentObjects based on obj.needed and obj.forbidden
+static void LoadFilesWithExtension(const std::string &path, const std::string &extension) // Launcher
+{
+   fileObjects.clear(); // Clear previous data
+   try
+   {
+      if (fs::exists(path) && fs::is_directory(path))
+      {
+         // Use recursive_directory_iterator to traverse subdirectories as well
+         for (auto &entry : fs::recursive_directory_iterator(path))
+         {
+            if (entry.is_regular_file() && entry.path().extension() == extension)
+            {
+               std::string filename = entry.path().string();
+               FileInfo fobj;
+               fobj.filename = filename;
+               try
+               {
+                  fobj.creation_date = std::filesystem::last_write_time(filename);
+               }
+               catch (const std::filesystem::filesystem_error &e)
+               {
+                  // Set creation_date to 1970-01-01 if there's an error
+                  fobj.creation_date = std::filesystem::file_time_type(std::chrono::seconds(0));
+               }
+
+               fileObjects.push_back(fobj);
+            }
+         }
+      }
+      else
+      {
+         std::cerr << "Directory does not exist." << std::endl;
+         return;
+      }
+   }
+   catch (const fs::filesystem_error &e)
+   {
+      std::cerr << "Error: " << e.what() << std::endl;
+   }
+}
+
+
 static void oldLoadFilesWithExtension(const std::string &path, const std::string &extension) // Launcher
 {
 
