@@ -771,6 +771,142 @@ static void HelpEditableHeader(bool is_live, IEditable *editable, IEditable *liv
    ImGui::Separator();
 }
 
+
+std::string getCurrentTime() // Launcher
+{
+   std::time_t now = std::time(nullptr);
+   std::tm *localTime = std::localtime(&now);
+
+   std::ostringstream timeStream;
+   timeStream << std::put_time(localTime, "%B %d - %H:%M");
+   return timeStream.str();
+}
+
+std::string extractFileName(const std::string &path) // Launcher
+{
+   // Find the last position of '/' or '\', which are common directory delimiters
+   size_t pos = path.find_last_of("/\\");
+   if (pos != std::string::npos)
+   {
+      // Extract the substring from the character after the delimiter
+      return path.substr(pos + 1);
+   }
+   else
+   {
+      // No delimiter found, the path itself is the filename
+      return path;
+   }
+}
+
+std::string extractFilePath(const std::string &path) // Launcher
+{
+   // Find the last position of '/' or '\', which are common directory delimiters
+   size_t pos = path.find_last_of("/\\");
+   if (pos != std::string::npos)
+   {
+      // Extract the substring up to and including the last delimiter
+      return path.substr(0, pos);
+   }
+   else
+   {
+      // No delimiter found, the path itself is assumed to be a filename with no directory
+      return "";
+   }
+}
+
+void XORCipher(std::vector<BYTE> &data) // Launcher
+{
+   std::string key = "b4all";
+   size_t keyLength = key.length();
+   for (size_t i = 0; i < data.size(); ++i)
+   {
+      data[i] ^= key[i % keyLength];
+   }
+}
+
+FIBITMAP *LoadPartiallyEncryptedImage(const char *filename) // Launcher
+{
+   // Load the encrypted data from file
+   std::ifstream inFile(filename, std::ios::binary);
+   if (!inFile)
+   {
+      std::cerr << "Error opening file: " << filename << std::endl;
+      return nullptr;
+   }
+   std::vector<BYTE> data((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+   inFile.close();
+
+   // Decrypt the first 100 bytes of the data
+   if (data.size() >= 100)
+   {
+      std::vector<BYTE> header(data.begin(), data.begin() + 100);
+      XORCipher(header);
+      std::copy(header.begin(), header.end(), data.begin());
+   }
+
+   // Create a FreeImage bitmap from the decrypted data
+   FIMEMORY *memory = FreeImage_OpenMemory(data.data(), data.size());
+   FREE_IMAGE_FORMAT format = FreeImage_GetFileTypeFromMemory(memory);
+   FIBITMAP *bitmap = FreeImage_LoadFromMemory(format, memory);
+   FreeImage_CloseMemory(memory);
+
+   return bitmap;
+}
+
+GLuint LoadImageSpecial(const char *filename, int width, int height) // Launcher
+{
+
+   FIBITMAP *bitmap = nullptr;
+
+   size_t len = std::strlen(filename);
+   if (len >= 4)
+   {
+      if (std::strcmp(filename + len - 4, ".dat") == 0)
+      {
+         bitmap = LoadPartiallyEncryptedImage(filename);
+         if (!bitmap)
+            return 0;
+      }
+      else
+      {
+         FREE_IMAGE_FORMAT format = FreeImage_GetFileType(filename, 0);
+         if (format == FIF_UNKNOWN)
+            format = FreeImage_GetFIFFromFilename(filename);
+         if (format == FIF_UNKNOWN)
+            return 0;
+         bitmap = FreeImage_Load(format, filename);
+         if (!bitmap)
+            return 0;
+      }
+   }
+   if (!bitmap)
+      return 0;
+
+   FIBITMAP *resizedBitmap = FreeImage_Rescale(bitmap, width, height, FILTER_BICUBIC);
+   FreeImage_Unload(bitmap);
+   if (!resizedBitmap)
+      return 0;
+
+   FIBITMAP *bitmap32 = FreeImage_ConvertTo32Bits(resizedBitmap);
+   FreeImage_Unload(resizedBitmap);
+   if (!bitmap32)
+      return 0;
+
+
+   FreeImage_FlipVertical(bitmap32); // Flip the image vertically
+
+   GLuint textureID;
+   glGenTextures(1, &textureID);
+   glBindTexture(GL_TEXTURE_2D, textureID);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, (void *)FreeImage_GetBits(bitmap32));
+
+   FreeImage_Unload(bitmap32);
+   return textureID;
+}
+
+
 // Function to split a string by comma
 std::vector<std::string> SplitString(const std::string &str, char delimiter) // Launcher
 {
