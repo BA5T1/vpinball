@@ -771,6 +771,131 @@ static void HelpEditableHeader(bool is_live, IEditable *editable, IEditable *liv
    ImGui::Separator();
 }
 
+
+
+std::vector<std::wstring> readLatestRegistry()
+{
+   HKEY hKey;
+   std::vector<std::wstring> filenames;
+
+   std::wstring REGISTRY_PATH = L"SOFTWARE\\Visual Pinball\\VP10\\Launcher\\Latest";
+
+   if (activeSetup == 1)
+   {
+      REGISTRY_PATH = L"SOFTWARE\\Visual Pinball\\VP10\\Launcher\\Latest1";
+   }
+
+   if (RegOpenKeyExW(HKEY_CURRENT_USER, REGISTRY_PATH.c_str(), 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+   {
+      DWORD index = 0;
+      wchar_t valueName[256];
+      DWORD valueNameSize;
+      DWORD type;
+      BYTE data[1024];
+      DWORD dataSize;
+
+      while (true)
+      {
+         valueNameSize = sizeof(valueName) / sizeof(valueName[0]);
+         dataSize = sizeof(data);
+         LONG result = RegEnumValueW(hKey, index, valueName, &valueNameSize, NULL, &type, data, &dataSize);
+         if (result == ERROR_NO_MORE_ITEMS)
+         {
+            break;
+         }
+         if (result == ERROR_SUCCESS && type == REG_SZ)
+         {
+            filenames.emplace_back(reinterpret_cast<wchar_t *>(data));
+         }
+         ++index;
+      }
+      RegCloseKey(hKey);
+   }
+
+   return filenames;
+}
+
+void writeLatestRegistry(const std::vector<std::wstring> &filenames)
+{
+   HKEY hKey;
+   DWORD disposition;
+   std::wstring REGISTRY_PATH = L"SOFTWARE\\Visual Pinball\\VP10\\Launcher\\Latest";
+
+   if (activeSetup == 1)
+   {
+      REGISTRY_PATH = L"SOFTWARE\\Visual Pinball\\VP10\\Launcher\\Latest1";
+   }
+
+   if (RegCreateKeyExW(HKEY_CURRENT_USER, REGISTRY_PATH.c_str(), 0, NULL, 0, KEY_WRITE, NULL, &hKey, &disposition) == ERROR_SUCCESS)
+   {
+      for (size_t i = 0; i < filenames.size(); ++i)
+      {
+         RegSetValueExW(hKey, std::to_wstring(i).c_str(), 0, REG_SZ, (const BYTE *)filenames[i].c_str(), (filenames[i].size() + 1) * sizeof(wchar_t));
+      }
+      RegCloseKey(hKey);
+   }
+}
+
+std::wstring stringToWstring(const std::string &str)
+{
+   size_t len = str.size() + 1;
+   std::vector<wchar_t> buffer(len);
+   std::mbstowcs(buffer.data(), str.c_str(), len);
+   return std::wstring(buffer.data());
+}
+
+std::string wstringToString(const std::wstring &wstr)
+{
+   int bufferSize = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
+   std::string str(bufferSize - 1, 0);
+   WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &str[0], bufferSize, NULL, NULL);
+   return str;
+}
+
+
+void updateLatestFilenames()
+{
+   auto filenames = readLatestRegistry();
+   const std::wstring newFilename = stringToWstring(currentObjects[currentSelection].filename);
+
+   if (std::find(filenames.begin(), filenames.end(), newFilename) == filenames.end())
+   {
+      if (filenames.size() >= 20)
+      {
+         filenames.erase(filenames.begin());
+      }
+      filenames.push_back(newFilename);
+      writeLatestRegistry(filenames);
+   }
+}
+
+bool loadFileObjectsLatest()
+{
+   auto filenames = readLatestRegistry();
+   fileObjectsLatest.clear();
+
+   for (const auto &wfilename : filenames)
+   {
+      std::string filename = wstringToString(wfilename);
+      try
+      {
+         fileObjectsLatest.push_back({ filename, std::filesystem::file_time_type(std::chrono::seconds(0)) });
+      }
+      catch (const std::filesystem::filesystem_error &e)
+      {
+         //Error accessing file
+         return false;
+      }
+
+      if (fileObjectsLatest.size() >= 20)
+      {
+         break;
+      }
+   }
+   return true;
+}
+
+
 bool validateRegex(const std::string &pattern)
 {
    try
