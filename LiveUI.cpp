@@ -771,7 +771,117 @@ static void HelpEditableHeader(bool is_live, IEditable *editable, IEditable *liv
    ImGui::Separator();
 }
 
+// Check if filename contains all words in requiredWords and none of the words in forbiddenWords
+bool CheckFilename(const std::string &filename, const std::string &nameWords, const std::string &requiredWords, const std::string &forbiddenWords) // Launcher
+{
+   // If requiredWords is empty, use words from filename
+   std::vector<std::string> requiredTokens;
+   if (!requiredWords.empty())
+   {
+      requiredTokens = SplitString(toLowerCase(requiredWords), ',');
+   }
+   else
+   {
+      requiredTokens = SplitString(toLowerCase(nameWords), ' ');
+   }
 
+   // Split forbiddenWords into vector
+   std::vector<std::string> forbiddenTokens = SplitString(toLowerCase(forbiddenWords), ',');
+
+   // Check if all required tokens are present in filename
+   bool allRequiredPresent = std::all_of(requiredTokens.begin(), requiredTokens.end(), [&](const std::string &word) { return toLowerCase(filename).find(word) != std::string::npos; });
+
+   // Check if any forbidden token is present in filename
+   bool anyForbiddenPresent = std::any_of(forbiddenTokens.begin(), forbiddenTokens.end(), [&](const std::string &word) { return toLowerCase(filename).find(word) != std::string::npos; });
+
+   // Return true if all required tokens are present and no forbidden tokens are present
+   return allRequiredPresent && !anyForbiddenPresent;
+}
+
+std::string replaceExtension(const std::string &filename, const std::string &oldExt, const std::string &newExt)
+{
+   // Find the position of the old extension
+   size_t index = filename.rfind(oldExt);
+
+   // Check if the extension is at the end of the string
+   if (index != std::string::npos && index == filename.length() - oldExt.length())
+   {
+      // Replace the old extension with the new one
+      return filename.substr(0, index) + newExt;
+   }
+   // Return the original string if no extension found at the end
+   return filename;
+}
+
+static bool launcherAutoupdate()
+{
+   // Launcher
+   HKEY hKey;
+   DWORD data = 0;
+   DWORD dataType = REG_DWORD;
+   DWORD dataSize = sizeof(data);
+
+   // Attempt to open the registry key
+   if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT("SOFTWARE\\Visual Pinball\\VP10\\Launcher"), 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+   {
+      // Attempt to query the value of 'onlinedata'
+      if (RegQueryValueEx(hKey, TEXT("onlineData"), NULL, &dataType, reinterpret_cast<LPBYTE>(&data), &dataSize) == ERROR_SUCCESS)
+      {
+         // Check if the value is set to 1
+         if (data == 1)
+         {
+            return true;
+         }
+      }
+
+      RegCloseKey(hKey);
+   }
+
+   return false;
+}
+
+std::string launcherReadRegistry(const char *StringName) // Launcher
+{
+   // Launcher Settings from registry
+   DWORD dwType = REG_SZ;
+   HKEY hKey = 0;
+   char value[1024];
+   DWORD value_length = 1024;
+   const char *subkey = "SOFTWARE\\Visual Pinball\\VP10\\Launcher";
+   LONG result = RegOpenKey(HKEY_CURRENT_USER, subkey, &hKey);
+   if (result != ERROR_SUCCESS)
+   {
+      //Failed to open registry key.
+      return "";
+   }
+
+   result = RegQueryValueEx(hKey, StringName, NULL, &dwType, (LPBYTE)&value, &value_length);
+   if (result != ERROR_SUCCESS)
+   {
+      // Failed to read registry value.
+      RegCloseKey(hKey);
+      return "";
+   }
+
+   // Close the registry key
+   RegCloseKey(hKey);
+
+   // Convert WCHAR buffer to narrow string
+   return std::string(value);
+}
+
+// Function to read a string value from the registry
+std::string ReadStringFromRegistry(HKEY hKey, const std::string &valueName)
+{
+   char value[1024];
+   DWORD valueLength = sizeof(value);
+   DWORD type = REG_SZ;
+   if (RegQueryValueEx(hKey, valueName.c_str(), NULL, &type, (LPBYTE)&value, &valueLength) == ERROR_SUCCESS)
+   {
+      return std::string(value, valueLength - 1); // -1 to remove the null terminator
+   }
+   return "";
+}
 
 std::vector<std::wstring> readLatestRegistry()
 {
