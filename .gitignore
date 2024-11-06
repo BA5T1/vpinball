@@ -3,5 +3,4 @@ build/
 .build/
 .vs/
 /CMakeLists.txt
-third-party/
 .gitignore
