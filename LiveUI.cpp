@@ -771,6 +771,240 @@ static void HelpEditableHeader(bool is_live, IEditable *editable, IEditable *liv
    ImGui::Separator();
 }
 
+// Comparator function for sorting by creation_date
+bool compareByCreationDate(const FileInfo &a, const FileInfo &b)
+{
+   return a.creation_date > b.creation_date; // Sort in descending order
+}
+
+bool compareByName(const TableInfoCurrent &a, const TableInfoCurrent &b)
+{
+   if (a.name == b.name)
+   {
+      return a.filename > b.filename; // Sort by filename if names are equal
+   }
+   return a.name < b.name; // Otherwise, sort by name
+}
+
+// Function to load files and set currentObjects based on obj.needed and obj.forbidden
+bool CheckFilesWithTables(const std::string &currentTable) // Launcher
+{
+
+   std::string filename = "";
+   bool filterValide = false;
+   size_t index = 0;
+
+   currentObjects.clear();
+   std::vector<FileInfo> tempFileObjects = fileObjects; // Create a temporary copy of fileObjects
+
+   if (filters[activeFilter].id == 2)
+   {
+      // Sort tempFileObjects by creation date in descending order
+      sort(tempFileObjects.begin(), tempFileObjects.end(), compareByCreationDate);
+
+      // Limit to the 20 newest entries
+      if (tempFileObjects.size() > 20)
+      {
+         tempFileObjects.resize(20);
+      }
+   }
+
+   if (filters[activeFilter].id == 3)
+   {
+      // Latest played
+      if (loadFileObjectsLatest())
+      {
+         tempFileObjects.clear();
+         tempFileObjects = fileObjectsLatest;
+      }
+      else
+      {
+         // error
+         activeFilter = 0;
+      }
+   }
+
+   for (auto &fobj : tempFileObjects)
+   {
+      filename = extractFileName(fobj.filename);
+
+      if (filters[activeFilter].id > 4)
+      {
+         filterValide = matchesFilter(toLowerCase(filename));
+
+         if (filterValide)
+         {
+            // check against favorite-flag
+            if (filters[activeFilter].forbidden != "")
+            {
+               if (filters[activeFilter].forbidden == "1")
+               {
+                  if (!isFileMarked(fobj.filename))
+                  {
+                     filterValide = false;
+                     continue;
+                  }
+               }
+               if (filters[activeFilter].forbidden == "2")
+               {
+                  if (isFileMarked(fobj.filename))
+                  {
+                     filterValide = false;
+                     continue;
+                  }
+               }
+            }
+         }
+      }
+      else
+      {
+         filterValide = true;
+      }
+
+
+      // filebrowser
+      if (filters[activeFilter].id == 4)
+      {
+         filterValide = false;
+         bool fileIsValid = false;
+
+         for (auto &obj : tableObjects)
+         {
+            if (CheckFilename(filename, obj.name, obj.needed, obj.forbidden))
+            {
+               fileIsValid = true;
+               break;
+            }
+         }
+
+         TableInfoCurrent obj2;
+         obj2.name = extractFileName(fobj.filename);
+         obj2.display = obj2.name;
+         if (fileIsValid)
+         {
+            obj2.manufacturer = "assignable";
+         }
+         else
+         {
+            obj2.manufacturer = "cannot be assigned";
+         }
+
+         obj2.filename = fobj.filename;
+         obj2.highscores = getHighscore(fobj.filename);
+         if (fobj.filename == currentTable)
+         {
+            currentSelection = index;
+         }
+         obj2.favorite = isFileMarked(fobj.filename);
+         currentObjects.push_back(obj2);
+         index++; // Increment index after each iteration
+      }
+
+      if (filters[activeFilter].id == 5)
+      {
+         filterValide = false;
+         bool fileIsValid = false;
+
+         for (auto &obj : tableObjects)
+         {
+            if (CheckFilename(filename, obj.name, obj.needed, obj.forbidden))
+            {
+               fileIsValid = true;
+               break;
+            }
+         }
+
+         TableInfoCurrent obj2;
+         obj2.name = extractFileName(fobj.filename);
+         obj2.display = obj2.name;
+         if (!fileIsValid)
+         {
+            obj2.manufacturer = "not assigned";
+            obj2.filename = fobj.filename;
+            obj2.highscores = getHighscore(fobj.filename);
+            if (fobj.filename == currentTable)
+            {
+               currentSelection = index;
+            }
+            obj2.favorite = isFileMarked(fobj.filename);
+            currentObjects.push_back(obj2);
+            index++; // Increment index after each iteration
+         }
+      }
+
+      // filter
+      if (filterValide)
+      {
+         for (auto &obj : tableObjects)
+         {
+
+            // favorites as filter
+            if ((filters[activeFilter].id == 1 && isFileMarked(fobj.filename)) || filters[activeFilter].id != 1)
+            {
+               if (CheckFilename(filename, obj.name, obj.needed, obj.forbidden))
+               {
+                  TableInfoCurrent obj2;
+                  obj2.name = obj.name;
+                  obj2.display = obj.display;
+                  obj2.manufacturer = obj.manufacturer;
+                  obj2.filename = fobj.filename;
+                  obj2.highscores = getHighscore(fobj.filename);
+                  if (fobj.filename == currentTable)
+                  {
+                     currentSelection = index;
+                     if (obj.highscoreFile != "")
+                     {
+                        g_pplayer->m_romname = obj.highscoreFile;
+                     }
+                  }
+                  obj2.favorite = isFileMarked(fobj.filename);
+                  currentObjects.push_back(obj2);
+
+                  index++; // Increment index after each iteration
+               }
+            }
+         }
+      }
+   }
+
+   for (auto &filter : filters)
+   {
+      if (filter.id == filters[activeFilter].id)
+      {
+         filter.count = currentObjects.size();
+      }
+   }
+
+
+   if (currentObjects.size() == 0)
+   {
+      return false;
+   }
+
+   sort(currentObjects.begin(), currentObjects.end(), compareByName);
+
+   // get current
+   index = 0;
+   for (auto &obj : currentObjects)
+   {
+      if (obj.filename == currentTable)
+      {
+         currentSelection = index;
+         break;
+      }
+
+      index++; // Increment index after each iteration
+   }
+
+
+   while (currentObjects.size() <= launcherItems)
+   {
+      // Double the items by appending the same vector to itself
+      currentObjects.insert(currentObjects.end(), currentObjects.begin(), currentObjects.end());
+   }
+   swapImage = true;
+   return true;
+}
 
 
 ImGui::MarkdownConfig LiveUI::markdown_config;
