@@ -21,6 +21,17 @@ public:
    void OpenMainSplash();
    void OpenLiveUI();
 
+   // Launcher
+   void launchTable();
+   void closeVPX(bool shutdown);
+   void launcherSaveVersatz();
+   void launcherLoadVersatz();
+   void launcherSaveFilter();
+   void launcherLoadFilter();
+   void launcherLoadFontscale();
+   void setHighscores();
+   string getHighscores();
+
    void OpenTweakMode();
    bool IsTweakMode() const { return m_tweakMode; }
    void OnTweakModeEvent(const int keyEvent, const int keycode);
@@ -45,7 +56,18 @@ private:
       TweakOption(TweakType _type, float _min, float _max, float _step, float _def, const string& _name, const string& _unit, std::initializer_list<string> _options): 
          type(_type), min(_min), max(_max), step(_step), def(_def), name(_name), unit(_unit), options(_options) { }
    };
-   enum TweakPage { TP_Info, TP_Rules, TP_PointOfView, TP_TableOption, TP_VRTweakUI, TP_Count };
+
+   // Launcher
+   enum TweakPage
+   {
+      TP_Launcher,
+      TP_Info,
+      TP_Rules,
+      TP_PointOfView,
+      TP_TableOption,
+      TP_VRTweakUI,
+      TP_Count
+   };
    enum BackdropSetting
    {
       BS_Page,
@@ -54,7 +76,8 @@ private:
       // Table tweaks & Custom table defined options (must be the last of this enum)
       BS_MusicVolume, BS_SoundVolume, BS_DayNight, BS_Difficulty, BS_Tonemapper, BS_TweakUI_X, BS_TweakUI_Y, BS_Custom
    };
-   TweakPage m_activeTweakPage = TP_PointOfView;
+   //TweakPage m_activeTweakPage = TP_PointOfView;
+   TweakPage m_activeTweakPage = TP_Launcher; // Launcher
    U32 m_lastTweakKeyDown = 0;
    int m_activeTweakIndex = 0;
    int m_tweakState[BS_Custom + 100]; // 0 = unmodified, 1 = modified, 2 = reseted

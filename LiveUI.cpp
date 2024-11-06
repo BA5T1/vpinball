@@ -1,6 +1,18 @@
 #include "stdafx.h"
-
+#include "freeimage.h" // Launcher
 #include "LiveUI.h"
+
+#include <unordered_set> // Launcher
+#include "vpversion.h" // Launcher
+#include <iostream> // Launcher
+#include <fstream> // Launcher
+#include <sstream> // Launcher
+#include <locale> // Launcher
+#include <filesystem> // Launcher
+#include <string> // Launcher
+#include <regex> // Launcher
+#include <chrono> // Launcher
+#include <random> // Launcher
 
 #include "renderer/Shader.h"
 #include "renderer/Anaglyph.h"
@@ -61,6 +73,144 @@
       ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthStretch); \
       ImGui::TableSetupColumn("Sync", ImGuiTableColumnFlags_WidthFixed); \
    }
+
+
+// Launcher
+namespace fs = std::filesystem;
+
+// Define your object structure
+struct TableInfo
+{
+   std::string name;
+   std::string display;
+   std::string manufacturer;
+   std::string needed;
+   std::string forbidden;
+   std::string highscoreFile;
+};
+
+// Define your object structure
+struct TableInfoCurrent
+{
+   std::string name;
+   std::string display;
+   std::string manufacturer;
+   std::string filename;
+   std::string highscores;
+   bool favorite = false;
+};
+
+struct Score
+{
+   std::string header;
+   std::string value;
+   std::string name;
+};
+
+struct FilterInfo
+{
+   std::string filtername;
+   std::string needed;
+   std::string forbidden;
+   int count = -1;
+   int id;
+};
+
+struct RenderProbeInfo
+{
+   std::string name;
+   int type;
+   bool hasRendered;
+};
+
+struct FileInfo
+{
+   std::string filename;
+   std::filesystem::file_time_type creation_date;
+};
+
+static std::vector<RenderProbeInfo> renderinfos;
+static std::vector<FilterInfo> filters;
+static std::vector<FileInfo> fileObjects;
+static std::vector<FileInfo> fileObjectsLatest;
+static std::vector<TableInfo> tableObjects;
+static std::vector<TableInfoCurrent> currentObjects;
+static string exePath = "";
+static string pinemhiPath = "";
+static string tablePath = "";
+static string launcherUpdateInfo = "";
+static string launcherVersion = "Version " STR(VPXLAUNCHER);
+
+static string launcherStartKey = "ePlungerKey";
+static string launcherFilterKey = "eStartGameKey";
+static string launcherSettingsKey = "eAddCreditKey";
+static string launcherFavoriteKey = "eAddCreditKey2";
+static string launcherRandomizeKey = "eCenterTiltKey";
+
+static string launcherUpKey = "eLeftFlipperKey";
+static string launcherDownKey = "eRightFlipperKey";
+
+static string launcherJumpUpKey = "eLeftMagnaSave";
+static string launcherJumpDownKey = "eRightMagnaSave";
+
+static string launcherLeftKey = "eLeftMagnaSave";
+static string launcherRightKey = "eRightMagnaSave";
+
+
+static int launcherItems = 10;
+static int filterItems = 10;
+static int currentSelection = 0; // Index of the currently selected file
+static int keyHoldTimer = 0; // Timer to track key holds
+static int keyHoldDelay = 10000; // Delay threshold to increase step count
+static int launcherLastHeight = 0; // Height of window
+static bool launcherInitialized = false;
+static bool renderTables = false;
+static bool renderWheels = false;
+static bool setupMode = false;
+static int setupModeValue = 0; // set to first entry
+static int maxSetupModeValue = 19; // max setting items
+static bool filterMode = false;
+static bool filterShortMode = false;
+static bool filterModeDisabled = false;
+static int activeFilter = 0;
+static int activeLayout = 0;
+
+static int flipAxis = -1;
+static int imageSize = 100;
+static int imageBigSizeX = 216;
+static int imageBigSizeY = 480;
+
+static bool swapImage = true;
+static bool saveHighscore = true;
+static bool launcherReady = false;
+static int activeSetup = 0;
+
+float launcherVersatz = 380.0f;
+float launcherVersatzY = 200.0f;
+float launcherWindowSizeX = 0.75f;
+float launcherWindowSizeY = 0.8f;
+float launcherWindowSizeVRx = 1.0f;
+float launcherWindowSizeVRy = 1.0f;
+float launcherWindowTransparency = 0.5f;
+float launcherBgRed = 0.5f;
+float launcherBgGreen = 0.5f;
+float launcherBgBlue = 0.5f;
+float fontFactor = 1.0f;
+
+int highlightChoice = 0;
+int secureCounter = 0;
+
+ImVec4 launcherHighlight = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+
+ImVec2 launcherWinSize;
+
+GLuint myTextureID = 0;
+GLuint myTextureBigID = 1;
+GLuint myTextureBackID = 2;
+GLuint myLogoTextureID = 3;
+GLuint myDummyTextureID = 4;
+GLuint myDummyBigTextureID = 5;
+std::unordered_set<std::string> markedFiles;
 
 
 #define ICON_SAVE ICON_FK_FLOPPY_O
