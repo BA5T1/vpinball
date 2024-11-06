@@ -98,6 +98,11 @@ Player::Player(PinTable *const editor_table, PinTable *const live_table, const i
 
    m_render_mask = DEFAULT;
 
+   // Launcher
+   m_romname = "";
+   m_vpscore = "";
+   m_launcherActive = false;
+
    m_throwBalls = false;
    m_ballControl = false;
    m_pactiveballBC = nullptr;
@@ -1792,6 +1797,21 @@ HRESULT Player::Init()
    if (m_supportsTouch && m_showTouchMessage) //!! visualize with real buttons or at least the areas?? Add extra buttons?
       m_liveUI->PushNotification("You can use Touch controls on this display: bottom left area to Start Game, bottom right area to use the Plunger\n"
                                  "lower left/right for Flippers, upper left/right for Magna buttons, top left for Credits and (hold) top right to Exit"s, 12000);
+
+
+   // Launcher
+   g_pplayer->m_romname = "GETROM";
+   g_pplayer->m_ptable->m_pcv->EvaluateScriptStatement("On Error Resume Next: debug.print Controller.romname: On Error Goto 0");
+   if (g_pplayer->m_romname == "" || g_pplayer->m_romname == "GETROM")
+   {
+      g_pplayer->m_romname = "VPXscore";
+   }
+   if (m_ptable->m_szTitle == "dummy")
+   {
+      m_launcherActive = true;
+      m_liveUI->OpenTweakMode();
+   }
+
 
    if (m_playMode == 1)
       m_liveUI->OpenTweakMode();

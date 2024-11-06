@@ -3961,6 +3961,31 @@ void DebuggerModule::Init(CodeViewer * const pcv)
 
 STDMETHODIMP DebuggerModule::Print(VARIANT *pvar)
 {
+   // Launcher
+   if (g_pplayer->m_romname == "GETROM")
+   {
+      g_pplayer->m_romname = "";
+
+      CComVariant varT;
+      const HRESULT hr = VariantChangeType(&varT, pvar, 0, VT_BSTR);
+
+      if (FAILED(hr))
+      {
+         return S_OK;
+      }
+
+      const WCHAR *const wzT = V_BSTR(&varT);
+      const int len = lstrlenW(wzT);
+
+      char *const szT = new char[len + 1];
+      WideCharToMultiByteNull(CP_ACP, 0, wzT, -1, szT, len + 1, nullptr, nullptr);
+      g_pplayer->m_romname = szT; // Launcher Highscore get romname
+      delete[] szT;
+
+      return S_OK;
+   }
+
+
    // Disable logging in locked tables (there is no debugger in locked mode anyway)
    if (g_pplayer->m_ptable->IsLocked())
       return S_OK;

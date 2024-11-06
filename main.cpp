@@ -699,6 +699,9 @@ public:
       m_vpinball.m_bgles = m_bgles;
       m_vpinball.m_fgles = m_fgles;
 
+      // Launcher
+      m_vpinball.m_szMyIniPath = m_szIniFileName;
+
       g_haccel = LoadAccelerators(m_vpinball.theInstance, MAKEINTRESOURCE(IDR_VPACCEL));
 
       if (m_file)
