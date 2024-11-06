@@ -3578,6 +3578,809 @@ void LiveUI::OnTweakModeEvent(const int keyEvent, const int keycode)
          m_tweakScroll += speed;
    }
 
+      if (m_activeTweakPage == TP_Launcher)
+   {
+
+      if (keycode == g_pplayer->m_rgKeys[eLeftTiltKey])
+      {
+         if (keyEvent == 2)
+         {
+            if (setupMode)
+            {
+
+               encryptTableImages();
+            }
+         }
+         return;
+      }
+
+
+      if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherSettingsKey)]) // Launcher
+      {
+         if (keyEvent == 2)
+         {
+            if (setupMode)
+            {
+               setupMode = false;
+               launcherSaveVersatz();
+               swapImage = true;
+            }
+            else
+            {
+               filterMode = false;
+               setupMode = true;
+            }
+         }
+         return;
+      }
+
+      if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherFilterKey)]) // Launcher
+      {
+         if (keyEvent == 1 && !filterMode && !setupMode)
+         {
+            filterShortMode = true;
+         }
+
+         if (keyEvent == 2)
+         {
+
+            if (filterMode)
+            {
+               filterShortMode = false;
+               launcherSaveFilter();
+
+               // check filearray against tabledata
+               if (!CheckFilesWithTables(m_live_table->m_szFileName))
+               {
+                  activeFilter = 0;
+                  CheckFilesWithTables(m_live_table->m_szFileName);
+               }
+               filterMode = false;
+               swapImage = true;
+            }
+            else if (!filterModeDisabled)
+            {
+               setupMode = false;
+               filterMode = true;
+            }
+         }
+         if (keyEvent == 2 && filterShortMode && !filterMode && !setupMode)
+         {
+            filterModeDisabled = false;
+            filterShortMode = false;
+         }
+         return;
+      }
+
+      if (filterMode && (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherStartKey)])) // Launcher
+      {
+         if (keyEvent == 2)
+         {
+            launcherSaveFilter();
+
+            // check filearray against tabledata
+            if (!CheckFilesWithTables(m_live_table->m_szFileName))
+            {
+               activeFilter = 0;
+               CheckFilesWithTables(m_live_table->m_szFileName);
+            }
+            filterMode = false;
+         }
+         return;
+      }
+
+      if (setupMode) // Launcher
+      {
+         if (keyEvent == 2)
+         {
+            if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherDownKey)])
+            {
+               secureCounter = 0;
+               setupModeValue = setupModeValue + 1;
+               if (setupModeValue > maxSetupModeValue)
+               {
+                  setupModeValue = 0;
+               }
+               return;
+            }
+
+            if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherUpKey)])
+            {
+               secureCounter = 0;
+               setupModeValue = setupModeValue - 1;
+               if (setupModeValue < 0)
+               {
+                  setupModeValue = maxSetupModeValue;
+               }
+               return;
+            }
+         }
+      }
+
+      if (setupMode && (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherLeftKey)])) // Launcher
+      {
+         static U32 startOfPress = 0;
+         if (keyEvent != 0)
+            startOfPress = msec();
+         if (keyEvent == 2) // Do not react on key up (only key down or long press)
+            return;
+         if (keyEvent == 1)
+         {
+            // Key just pressed (single activation)
+            keyHoldTimer = 0; // Reset timer when key is pressed
+            // Immediate response when key is pressed
+            // Update selection based on which key was pressed or held
+            if (setupModeValue == 0 && m_player->m_stereo3D == STEREO_VR)
+               launcherVersatz = launcherVersatz - 1.0f;
+            if (setupModeValue == 1 && m_player->m_stereo3D == STEREO_VR)
+            {
+               fontFactor = fontFactor - 0.01f;
+               if (fontFactor < 0.3f)
+                  fontFactor = 0.3f;
+            }
+            if (setupModeValue == 2 && m_player->m_stereo3D == STEREO_VR)
+               if (launcherVersatzY > 1.0f)
+                  launcherVersatzY = launcherVersatzY - 1.0f;
+            if (setupModeValue == 5)
+            {
+               if (launcherWindowSizeX > 0.2)
+                  launcherWindowSizeX = launcherWindowSizeX - 0.01f;
+            }
+            if (setupModeValue == 6)
+            {
+               if (launcherWindowSizeY > 0.2)
+                  launcherWindowSizeY = launcherWindowSizeY - 0.01f;
+            }
+            if (setupModeValue == 3 && m_player->m_stereo3D == STEREO_VR)
+            {
+               if (launcherWindowSizeVRx > 0.2)
+                  launcherWindowSizeVRx = launcherWindowSizeVRx - 0.01f;
+            }
+            if (setupModeValue == 4 && m_player->m_stereo3D == STEREO_VR)
+            {
+               if (launcherWindowSizeVRy > 0.2)
+                  launcherWindowSizeVRy = launcherWindowSizeVRy - 0.01f;
+            }
+            if (setupModeValue == 7)
+            {
+               launcherWindowTransparency = launcherWindowTransparency - 0.01f;
+               if (launcherWindowTransparency < 0.0f)
+               {
+                  launcherWindowTransparency = 0.0f;
+               }
+            }
+
+            if (setupModeValue == 8)
+            {
+               launcherBgRed = launcherBgRed - 0.01f;
+               if (launcherBgRed < 0.0f)
+               {
+                  launcherBgRed = 0.0f;
+               }
+            }
+            if (setupModeValue == 9)
+            {
+               launcherBgGreen = launcherBgGreen - 0.01f;
+               if (launcherBgGreen < 0.0f)
+               {
+                  launcherBgGreen = 0.0f;
+               }
+            }
+            if (setupModeValue == 10)
+            {
+               launcherBgBlue = launcherBgBlue - 0.01f;
+               if (launcherBgBlue < 0.0f)
+               {
+                  launcherBgBlue = 0.0f;
+               }
+            }
+            if (setupModeValue == 11)
+            {
+               if (activeLayout == 0)
+               {
+                  activeLayout = 1;
+               }
+               else
+               {
+                  activeLayout = 0;
+               }
+            }
+            if (setupModeValue == 12)
+            {
+               highlightChoice -= 1;
+               if (highlightChoice < 0)
+               {
+                  highlightChoice = 6;
+               }
+               updateHighlightColor();
+            }
+            if (setupModeValue == 13)
+            {
+               markFile(currentObjects[currentSelection].filename);
+            }
+            if (setupModeValue == 14)
+            {
+               launchTable();
+            }
+            if (setupModeValue == 15)
+            {
+               CloseTweakMode();
+               g_pplayer->m_launcherActive = false;
+               OpenTweakMode();
+            }
+            if (setupModeValue == 16)
+            {
+               g_pplayer->m_pin3d.m_pd3dPrimaryDevice->recenterTable();
+            }
+            if (setupModeValue == 17)
+            {
+               g_pplayer->m_pin3d.m_pd3dPrimaryDevice->tableDown();
+            }
+            if (setupModeValue == 18)
+            {
+               if (secureCounter > 1)
+               {
+                  closeVPX(false);
+               }
+               else
+               {
+                  secureCounter++;
+               }
+            }
+            if (setupModeValue == 19)
+            {
+               if (secureCounter > 1)
+               {
+                  closeVPX(true);
+               }
+               else
+               {
+                  secureCounter++;
+               }
+            }
+
+            return;
+         }
+         else if (keyEvent == 0)
+         {
+            // Key is held down
+            keyHoldTimer += (int)(msec() - startOfPress); // Increment timer by the time elapsed since last frame
+            if (keyHoldTimer >= keyHoldDelay)
+            {
+               // When the hold time exceeds the delay, reset the timer and allow for repeat action
+               keyHoldTimer -= keyHoldDelay;
+               // Respond to key hold by updating selection repeatedly
+               // Update selection based on which key was pressed or held
+               if (setupModeValue == 0 && m_player->m_stereo3D == STEREO_VR)
+                  launcherVersatz = launcherVersatz - 1.0f;
+               if (setupModeValue == 1 && m_player->m_stereo3D == STEREO_VR)
+               {
+                  fontFactor = fontFactor - 0.01f;
+                  if (fontFactor < 0.3f)
+                     fontFactor = 0.3f;
+               }
+               if (setupModeValue == 2 && m_player->m_stereo3D == STEREO_VR)
+                  if (launcherVersatzY > 1.0f)
+                     launcherVersatzY = launcherVersatzY - 1.0f;
+               if (setupModeValue == 5)
+               {
+                  if (launcherWindowSizeX > 0.2)
+                     launcherWindowSizeX = launcherWindowSizeX - 0.01f;
+               }
+               if (setupModeValue == 6)
+               {
+                  if (launcherWindowSizeY > 0.2)
+                     launcherWindowSizeY = launcherWindowSizeY - 0.01f;
+               }
+               if (setupModeValue == 3 && m_player->m_stereo3D == STEREO_VR)
+               {
+                  if (launcherWindowSizeVRx > 0.2)
+                     launcherWindowSizeVRx = launcherWindowSizeVRx - 0.01f;
+               }
+               if (setupModeValue == 4 && m_player->m_stereo3D == STEREO_VR)
+               {
+                  if (launcherWindowSizeVRy > 0.2)
+                     launcherWindowSizeVRy = launcherWindowSizeVRy - 0.01f;
+               }
+               if (setupModeValue == 7)
+               {
+                  launcherWindowTransparency = launcherWindowTransparency - 0.01f;
+                  if (launcherWindowTransparency < 0.0f)
+                  {
+                     launcherWindowTransparency = 0.0f;
+                  }
+               }
+               if (setupModeValue == 8)
+               {
+                  launcherBgRed = launcherBgRed - 0.01f;
+                  if (launcherBgRed < 0.0f)
+                  {
+                     launcherBgRed = 0.0f;
+                  }
+               }
+               if (setupModeValue == 9)
+               {
+                  launcherBgGreen = launcherBgGreen - 0.01f;
+                  if (launcherBgGreen < 0.0f)
+                  {
+                     launcherBgGreen = 0.0f;
+                  }
+               }
+               if (setupModeValue == 10)
+               {
+                  launcherBgBlue = launcherBgBlue - 0.01f;
+                  if (launcherBgBlue < 0.0f)
+                  {
+                     launcherBgBlue = 0.0f;
+                  }
+               }
+            }
+         }
+         return;
+      }
+
+      if (setupMode && (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherRightKey)])) // Launcher
+      {
+         static U32 startOfPress = 0;
+         if (keyEvent != 0)
+            startOfPress = msec();
+         if (keyEvent == 2) // Do not react on key up (only key down or long press)
+            return;
+         if (keyEvent == 1)
+         {
+
+            // Key just pressed (single activation)
+            keyHoldTimer = 0; // Reset timer when key is pressed
+            // Immediate response when key is pressed
+            // Update selection based on which key was pressed or held
+            if (setupModeValue == 0 && m_player->m_stereo3D == STEREO_VR)
+            {
+               launcherVersatz = launcherVersatz + 1.0f;
+            }
+            if (setupModeValue == 1 && m_player->m_stereo3D == STEREO_VR)
+            {
+               fontFactor = fontFactor + 0.01f;
+            }
+            if (setupModeValue == 2 && m_player->m_stereo3D == STEREO_VR)
+            {
+               if (launcherVersatzY < 400.0f)
+                  launcherVersatzY = launcherVersatzY + 1.0f;
+            }
+            if (setupModeValue == 5)
+            {
+               if (launcherWindowSizeX < 1.5)
+                  launcherWindowSizeX = launcherWindowSizeX + 0.01f;
+            }
+            if (setupModeValue == 6)
+            {
+               if (launcherWindowSizeY < 1.5)
+                  launcherWindowSizeY = launcherWindowSizeY + 0.01f;
+            }
+            if (setupModeValue == 3 && m_player->m_stereo3D == STEREO_VR)
+            {
+               if (launcherWindowSizeVRx < 1.5)
+                  launcherWindowSizeVRx = launcherWindowSizeVRx + 0.01f;
+            }
+            if (setupModeValue == 4 && m_player->m_stereo3D == STEREO_VR)
+            {
+               if (launcherWindowSizeVRy < 1.5)
+                  launcherWindowSizeVRy = launcherWindowSizeVRy + 0.01f;
+            }
+            if (setupModeValue == 7)
+            {
+               launcherWindowTransparency = launcherWindowTransparency + 0.01f;
+               if (launcherWindowTransparency > 1.0f)
+               {
+                  launcherWindowTransparency = 1.0f;
+               }
+            }
+            if (setupModeValue == 8)
+            {
+               launcherBgRed = launcherBgRed + 0.01f;
+               if (launcherBgRed > 1.0f)
+               {
+                  launcherBgRed = 1.0f;
+               }
+            }
+            if (setupModeValue == 9)
+            {
+               launcherBgGreen = launcherBgGreen + 0.01f;
+               if (launcherBgGreen > 1.0f)
+               {
+                  launcherBgGreen = 1.0f;
+               }
+            }
+            if (setupModeValue == 10)
+            {
+               launcherBgBlue = launcherBgBlue + 0.01f;
+               if (launcherBgBlue > 1.0f)
+               {
+                  launcherBgBlue = 1.0f;
+               }
+            }
+            if (setupModeValue == 11)
+            {
+               if (activeLayout == 0)
+               {
+                  activeLayout = 1;
+               }
+               else
+               {
+                  activeLayout = 0;
+               }
+            }
+            if (setupModeValue == 12)
+            {
+               highlightChoice += 1;
+               if (highlightChoice > 6)
+               {
+                  highlightChoice = 0;
+               }
+               updateHighlightColor();
+            }
+            if (setupModeValue == 13)
+            {
+               markFile(currentObjects[currentSelection].filename);
+            }
+            if (setupModeValue == 14)
+            {
+               launchTable();
+            }
+            if (setupModeValue == 15)
+            {
+               CloseTweakMode();
+               g_pplayer->m_launcherActive = false;
+               OpenTweakMode();
+            }
+            if (setupModeValue == 16)
+            {
+               g_pplayer->m_pin3d.m_pd3dPrimaryDevice->recenterTable();
+            }
+            if (setupModeValue == 17)
+            {
+               g_pplayer->m_pin3d.m_pd3dPrimaryDevice->tableUp();
+            }
+            if (setupModeValue == 18)
+            {
+               if (secureCounter > 1)
+               {
+                  closeVPX(false);
+               }
+               else
+               {
+                  secureCounter++;
+               }
+            }
+            if (setupModeValue == 19)
+            {
+               if (secureCounter > 1)
+               {
+                  closeVPX(true);
+               }
+               else
+               {
+                  secureCounter++;
+               }
+            }
+            return;
+         }
+         else if (keyEvent == 0)
+         {
+            // Key is held down
+            keyHoldTimer += (int)(msec() - startOfPress); // Increment timer by the time elapsed since last frame
+            if (keyHoldTimer >= keyHoldDelay)
+            {
+               // When the hold time exceeds the delay, reset the timer and allow for repeat action
+               keyHoldTimer -= keyHoldDelay;
+               // Respond to key hold by updating selection repeatedly
+               // Update selection based on which key was pressed or held
+               if (setupModeValue == 0 && m_player->m_stereo3D == STEREO_VR)
+               {
+                  launcherVersatz = launcherVersatz + 1.0f;
+               }
+               if (setupModeValue == 1 && m_player->m_stereo3D == STEREO_VR)
+               {
+                  fontFactor = fontFactor + 0.01f;
+               }
+               if (setupModeValue == 2 && m_player->m_stereo3D == STEREO_VR)
+               {
+                  if (launcherVersatzY < 400.0f)
+                     launcherVersatzY = launcherVersatzY + 1.0f;
+               }
+               if (setupModeValue == 5)
+               {
+                  if (launcherWindowSizeX < 1.5)
+                     launcherWindowSizeX = launcherWindowSizeX + 0.01f;
+               }
+               if (setupModeValue == 6)
+               {
+                  if (launcherWindowSizeY < 1.5)
+                     launcherWindowSizeY = launcherWindowSizeY + 0.01f;
+               }
+               if (setupModeValue == 3 && m_player->m_stereo3D == STEREO_VR)
+               {
+                  if (launcherWindowSizeVRx < 1.5)
+                     launcherWindowSizeVRx = launcherWindowSizeVRx + 0.01f;
+               }
+               if (setupModeValue == 4 && m_player->m_stereo3D == STEREO_VR)
+               {
+                  if (launcherWindowSizeVRy < 1.5)
+                     launcherWindowSizeVRy = launcherWindowSizeVRy + 0.01f;
+               }
+               if (setupModeValue == 7)
+               {
+                  launcherWindowTransparency = launcherWindowTransparency + 0.01f;
+                  if (launcherWindowTransparency > 1.0f)
+                  {
+                     launcherWindowTransparency = 1.0f;
+                  }
+               }
+               if (setupModeValue == 8)
+               {
+                  launcherBgRed = launcherBgRed + 0.01f;
+                  if (launcherBgRed > 1.0f)
+                  {
+                     launcherBgRed = 1.0f;
+                  }
+               }
+               if (setupModeValue == 9)
+               {
+                  launcherBgGreen = launcherBgGreen + 0.01f;
+                  if (launcherBgGreen > 1.0f)
+                  {
+                     launcherBgGreen = 1.0f;
+                  }
+               }
+               if (setupModeValue == 10)
+               {
+                  launcherBgBlue = launcherBgBlue + 0.01f;
+                  if (launcherBgBlue > 1.0f)
+                  {
+                     launcherBgBlue = 1.0f;
+                  }
+               }
+            }
+         }
+         return;
+      }
+
+      if (filterMode)
+      {
+         static U32 startOfPress = 0;
+         if (keyEvent != 0)
+            startOfPress = msec();
+         if (keyEvent == 2) // Do not react on key up (only key down or long press)
+            return;
+         if (keyEvent == 1)
+         {
+
+            // Key just pressed (single activation)
+            keyHoldTimer = 0; // Reset timer when key is pressed
+            // Immediate response when key is pressed
+            // Update selection based on which key was pressed or held
+            if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherUpKey)])
+            {
+               activeFilter = (activeFilter - 1 + filters.size()) % filters.size();
+            }
+            else if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherDownKey)])
+            {
+               activeFilter = (activeFilter + 1) % filters.size();
+            }
+            return;
+         }
+         else if (keyEvent == 0)
+         {
+
+            // Key is held down
+            keyHoldTimer += (int)(msec() - startOfPress); // Increment timer by the time elapsed since last frame
+            if (keyHoldTimer >= keyHoldDelay)
+            {
+               // When the hold time exceeds the delay, reset the timer and allow for repeat action
+               keyHoldTimer -= keyHoldDelay;
+               // Respond to key hold by updating selection repeatedly
+               // Update selection based on which key was pressed or held
+               if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherUpKey)])
+               {
+                  activeFilter = (activeFilter - 1 + filters.size()) % filters.size();
+               }
+               else if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherDownKey)])
+               {
+                  activeFilter = (activeFilter + 1) % filters.size();
+               }
+               return;
+            }
+         }
+         return;
+      }
+
+
+      if (!setupMode && !filterMode
+         && (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherUpKey)] || keycode == g_pplayer->m_rgKeys[stringToEnum(launcherDownKey)]
+            || keycode == g_pplayer->m_rgKeys[stringToEnum(launcherStartKey)] || keycode == g_pplayer->m_rgKeys[stringToEnum(launcherFavoriteKey)]
+            || keycode == g_pplayer->m_rgKeys[stringToEnum(launcherRandomizeKey)] || keycode == g_pplayer->m_rgKeys[stringToEnum(launcherJumpUpKey)]
+            || keycode == g_pplayer->m_rgKeys[stringToEnum(launcherJumpDownKey)]))
+      {
+         if (filterShortMode)
+         {
+            if (keyEvent == 2)
+            {
+               if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherUpKey)])
+               {
+                  filterModeDisabled = true;
+                  activeFilter = (activeFilter - 1 + filters.size()) % filters.size();
+                  launcherSaveFilter();
+                  // check filearray against tabledata
+                  if (!CheckFilesWithTables(m_live_table->m_szFileName))
+                  {
+                     activeFilter = 0;
+                     CheckFilesWithTables(m_live_table->m_szFileName);
+                  }
+                  filterMode = false;
+                  swapImage = true;
+               }
+               else if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherDownKey)])
+               {
+                  filterModeDisabled = true;
+                  activeFilter = (activeFilter + 1) % filters.size();
+                  launcherSaveFilter();
+                  // check filearray against tabledata
+                  if (!CheckFilesWithTables(m_live_table->m_szFileName))
+                  {
+                     activeFilter = 0;
+                     CheckFilesWithTables(m_live_table->m_szFileName);
+                  }
+                  filterMode = false;
+                  swapImage = true;
+               }
+            }
+            return;
+         }
+
+
+         if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherRandomizeKey)]) // randomize currentSelection
+         {
+            if (keyEvent == 2)
+            {
+               // Generate a random index between 0 and currentObjects.size() - 1
+               std::random_device rd; // Obtain a random number from hardware
+               std::mt19937 gen(rd()); // Seed the generator
+               std::uniform_int_distribution<> distr(0, currentObjects.size() - 1); // Define the range
+
+               currentSelection = distr(gen);
+               swapImage = true;
+            }
+            return;
+         }
+
+
+         if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherFavoriteKey)]) // mark table as favorite
+         {
+            if (keyEvent == 2)
+            {
+               markFile(currentObjects[currentSelection].filename);
+            }
+            return;
+         }
+
+         if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherJumpDownKey)]) // previous alpha
+         {
+            if (keyEvent == 2)
+            {
+               // Alten Anfangsbuchstaben speichern
+               char oldAlpha = currentObjects[currentSelection].name[0];
+               char newAlpha = oldAlpha;
+               size_t startSelection = currentSelection;
+
+               // Solange der Anfangsbuchstabe gleich ist und wir nicht wieder am Startpunkt sind, zur vorherigen Auswahl wechseln
+               do
+               {
+                  currentSelection = (currentSelection + 1) % currentObjects.size();
+                  newAlpha = currentObjects[currentSelection].name[0]; // Nur den ersten Buchstaben nehmen
+               } while (newAlpha == oldAlpha && currentSelection != startSelection);
+
+               swapImage = true;
+            }
+            return;
+         }
+         if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherJumpUpKey)]) // next alpha
+         {
+            if (keyEvent == 2)
+            {
+               // Alten Anfangsbuchstaben speichern
+               char oldAlpha = currentObjects[currentSelection].name[0];
+               char newAlpha = oldAlpha;
+               size_t startSelection = currentSelection;
+
+               do
+               {
+                  currentSelection = (currentSelection - 1 + currentObjects.size()) % currentObjects.size();
+                  newAlpha = currentObjects[currentSelection].name[0]; // Nur den ersten Buchstaben nehmen
+               } while (newAlpha == oldAlpha && currentSelection != startSelection);
+
+               oldAlpha = currentObjects[currentSelection].name[0];
+               newAlpha = oldAlpha;
+               startSelection = currentSelection;
+
+               // again, ween need to go to pole posi
+
+               do
+               {
+                  currentSelection = (currentSelection - 1 + currentObjects.size()) % currentObjects.size();
+                  newAlpha = currentObjects[currentSelection].name[0]; // Nur den ersten Buchstaben nehmen
+               } while (newAlpha == oldAlpha && currentSelection != startSelection);
+
+               currentSelection = (currentSelection + 1) % currentObjects.size();
+
+               swapImage = true;
+            }
+            return;
+         }
+
+
+         if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherStartKey)])
+         {
+            if (keyEvent == 2)
+            {
+               launchTable();
+            }
+         }
+
+         static U32 startOfPress = 0;
+         if (keyEvent != 0)
+            startOfPress = msec();
+         if (keyEvent == 2)
+         {
+            // Do not react on key up (only key down or long press)
+            swapImage = true;
+            return;
+         }
+         if (keyEvent == 1)
+         {
+
+            // Key just pressed (single activation)
+            keyHoldTimer = 0; // Reset timer when key is pressed
+            // Immediate response when key is pressed
+            // Update selection based on which key was pressed or held
+            if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherUpKey)])
+            {
+               currentSelection = (currentSelection - 1 + currentObjects.size()) % currentObjects.size();
+               swapImage = true;
+            }
+            else if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherDownKey)])
+            {
+               currentSelection = (currentSelection + 1) % currentObjects.size();
+               swapImage = true;
+            }
+            return;
+         }
+         else if (keyEvent == 0)
+         {
+
+            // Key is held down
+            keyHoldTimer += (int)(msec() - startOfPress); // Increment timer by the time elapsed since last frame
+            if (keyHoldTimer >= keyHoldDelay)
+            {
+               // When the hold time exceeds the delay, reset the timer and allow for repeat action
+               keyHoldTimer -= keyHoldDelay;
+               // Respond to key hold by updating selection repeatedly
+               // Update selection based on which key was pressed or held
+               if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherUpKey)])
+               {
+                  currentSelection = (currentSelection - 1 + currentObjects.size()) % currentObjects.size();
+               }
+               else if (keycode == g_pplayer->m_rgKeys[stringToEnum(launcherDownKey)])
+               {
+                  currentSelection = (currentSelection + 1) % currentObjects.size();
+               }
+               return;
+            }
+         }
+      }
+
+      // launcher quits allways
+      return;
+   }
+
    if (keycode == g_pplayer->m_rgKeys[eLeftFlipperKey] || keycode == g_pplayer->m_rgKeys[eRightFlipperKey])
    {
       static U32 startOfPress = 0;
@@ -3613,6 +4416,8 @@ void LiveUI::OnTweakModeEvent(const int keyEvent, const int keycode)
                m_activeTweakPage = (TweakPage)((m_activeTweakPage + stepi) % TP_Count);
             if (m_activeTweakPage == TP_VRTweakUI && m_player->m_stereo3D != STEREO_VR)
                m_activeTweakPage = (TweakPage)((m_activeTweakPage + stepi) % TP_Count);
+            if (m_activeTweakPage == TP_Launcher)
+               m_activeTweakPage = (TweakPage)((m_activeTweakPage + stepi) % TP_Count); // Launcher
          }
          m_activeTweakIndex = 0;
          m_tweakScroll = 0.f;
@@ -4035,15 +4840,70 @@ void LiveUI::OnTweakModeEvent(const int keyEvent, const int keycode)
    }
 }
 
+//Launcher
+ImVec2 GetCenteredWindowPos(ImVec2 windowSize, float m_overlayFontsize)
+{
+   ImGuiIO &io = ImGui::GetIO();
+   ImVec2 displaySize = io.DisplaySize;
+   return ImVec2(((displaySize.x - 2.f * m_overlayFontsize) - windowSize.x) / 2, ((displaySize.y - 1.f * m_overlayFontsize) - windowSize.y) / 2);
+}
+
 void LiveUI::UpdateTweakModeUI()
 {
    PinTable* const table = m_live_table;
+
    constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-   ImVec2 minSize(min(m_overlayFont->FontSize * (m_activeTweakPage == TP_Rules ? 35.f : m_activeTweakPage == TP_Info ? 45.0f : 30.0f), min(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y)), 0.f);
+
+   // Launcher
+   constexpr ImGuiWindowFlags window_flags_launcher = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+
+   float tempSize = 30.0f;
+
+   if (m_activeTweakPage == TP_Rules)
+      tempSize = 35.0f;
+   if (m_activeTweakPage == TP_Info)
+      tempSize = 45.0f;
+   if (m_activeTweakPage == TP_Launcher)
+      tempSize = 45.0f;
+
+   ImVec2 minSize(min(m_overlayFont->FontSize * tempSize, min(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y)), 0.f);
    ImVec2 maxSize(ImGui::GetIO().DisplaySize.x - 2.f * m_overlayFont->FontSize, 0.8f * ImGui::GetIO().DisplaySize.y - 1.f * m_overlayFont->FontSize);
+   //ImVec2 minSize(min(m_overlayFont->FontSize * (m_activeTweakPage == TP_Rules ? 35.f : m_activeTweakPage == TP_Info ? 45.0f : 30.0f), min(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y)), 0.f);
+   //ImVec2 maxSize(ImGui::GetIO().DisplaySize.x - 2.f * m_overlayFont->FontSize, 0.8f * ImGui::GetIO().DisplaySize.y - 1.f * m_overlayFont->FontSize);
+
+   if (m_activeTweakPage == TP_Launcher)
+   {
+      if (m_player->m_stereo3D == STEREO_VR)
+      {
+         launcherWinSize = ImVec2(720 * launcherWindowSizeVRx, 490 * launcherWindowSizeVRy);
+         ImGui::SetNextWindowSize(launcherWinSize, ImGuiCond_Always);
+         ImGui::SetNextWindowPos(GetCenteredWindowPos(launcherWinSize, m_overlayFont->FontSize), 0, ImVec2(0.0f, 0.0f));
+      }
+      else
+      {
+         launcherWinSize = ImVec2(ImGui::GetIO().DisplaySize.x * launcherWindowSizeX, ImGui::GetIO().DisplaySize.y * launcherWindowSizeY);
+         ImGui::SetNextWindowSize(launcherWinSize, ImGuiCond_Always);
+         ImGui::SetNextWindowPos(GetCenteredWindowPos(launcherWinSize, m_overlayFont->FontSize), 0, ImVec2(0.0f, 0.0f));
+      }
+
+      // Set a custom background color for the child window
+      ImVec4 bgColor = ImVec4(launcherBgRed, launcherBgGreen, launcherBgBlue, 0.5f);
+      ImGui::PushStyleColor(ImGuiCol_WindowBg, bgColor);
+   }
+   else
+   {
+      //ImGui::SetNextWindowPos(ImVec2(0.5f * ImGui::GetIO().DisplaySize.x, 0.8f * ImGui::GetIO().DisplaySize.y), 0, ImVec2(0.5f, 1.f));
+      ImGui::SetNextWindowPos(ImVec2(0.5f * ImGui::GetIO().DisplaySize.x, 0.5f * ImGui::GetIO().DisplaySize.y), 0, ImVec2(0.5f, 0.5f));
+      ImGui::SetNextWindowSizeConstraints(minSize, maxSize);
+   }
+
+   //(m_player->m_stereo3D == STEREO_VR ? ImGui::SetNextWindowBgAlpha(0.5f) : ImGui::SetNextWindowBgAlpha(0.8f));
+   ImGui::SetNextWindowBgAlpha(1.0f - launcherWindowTransparency);
+
+
    ImGui::SetNextWindowBgAlpha(0.5f);
-   ImGui::SetNextWindowPos(ImVec2(0.5f * ImGui::GetIO().DisplaySize.x, 0.8f * ImGui::GetIO().DisplaySize.y), 0, ImVec2(0.5f, 1.f));
-   ImGui::SetNextWindowSizeConstraints(minSize, maxSize);
+   //ImGui::SetNextWindowPos(ImVec2(0.5f * ImGui::GetIO().DisplaySize.x, 0.8f * ImGui::GetIO().DisplaySize.y), 0, ImVec2(0.5f, 1.f));
+   //ImGui::SetNextWindowSizeConstraints(minSize, maxSize);
    ImGui::Begin("TweakUI", nullptr, window_flags);
 
    ViewSetupID vsId = table->m_BG_current_set;
@@ -4110,7 +4970,8 @@ void LiveUI::UpdateTweakModeUI()
                   - ((m_activeTweakPage > TP_VRTweakUI && m_player->m_stereo3D != STEREO_VR) ? 1 : 0)
                   - ((m_activeTweakPage > TP_PointOfView && m_player->m_stereo3D == STEREO_VR) ? 1 : 0);
             const int nTweakPages = 1 + (m_table->m_szRules.empty() ? 0 : 1) + (m_table->m_szDescription.empty() ? 0 : 1) + 1;
-               CM_ROW(setting, "Page "s.append(std::to_string(1 + pageIndex)).append("/").append(std::to_string(nTweakPages)).c_str(), "%s",
+            if (m_activeTweakPage != TP_Launcher)
+            CM_ROW(setting, "Page "s.append(std::to_string(1 + pageIndex)).append("/").append(std::to_string(nTweakPages)).c_str(), "%s",
                   m_activeTweakPage == TP_TableOption      ? "Table Options"
                      : m_activeTweakPage == TP_PointOfView ? "Point of View"
                      : m_activeTweakPage == TP_Rules       ? "Rules"
@@ -4154,6 +5015,29 @@ void LiveUI::UpdateTweakModeUI()
       #undef CM_ROW
       #undef CM_SKIP_LINE
       ImGui::EndTable();
+      // Launcher
+      if (m_activeTweakPage == TP_Launcher)
+      {
+         float windowWidth = ImGui::GetWindowWidth();
+         ImGui::SetCursorPosY(10);
+         ImGui::SetCurrentFont(m_digitalFont);
+         std::string timestring = getCurrentTime();
+         int textWidth = ImGui::CalcTextSize(timestring.c_str()).x;
+         ImGui::SetCursorPosX(windowWidth - textWidth - 10);
+         ImGui::TextColored(ImVec4(1, 1, 1, 1.0f), timestring.c_str());
+         ImGui::SetCurrentFont(m_overlayFont);
+
+
+         if (launcherUpdateInfo != "")
+         {
+            ImGui::SetCursorPosY(10);
+            textWidth = ImGui::CalcTextSize(launcherUpdateInfo.c_str()).x;
+            ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+            ImGui::TextColored(ImVec4(1.0f, 0.55f, 0, 1.0f), launcherUpdateInfo.c_str());
+         }
+
+         ImGui::SetCursorPosY(10);
+      }
    }
 
    if (m_activeTweakPage == TP_PointOfView)
@@ -4202,6 +5086,1032 @@ void LiveUI::UpdateTweakModeUI()
       ImGui::EndChild();
       ImGui::NewLine();
    }
+   else if (m_activeTweakPage == TP_Launcher) // Launcher
+   {
+
+      static float lastHeight = 0.f;
+      //ImGui::SetNextWindowSizeConstraints(ImVec2(0.f, 0.f), ImVec2(FLT_MAX, launcherLastHeight));
+
+      if (ImGui::BeginChild("Launcher", ImVec2(0.f, 0.f), 0, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar))
+      {
+         if (launcherReady && currentObjects.size() > launcherItems)
+         {
+            if (setupMode)
+            {
+               ImVec4 textcolor = ImVec4(1, 1, 1, 1);
+               ImVec4 markercolor = launcherHighlight;
+
+               ImGui::SetCursorPosY(60);
+               ImGui::SetCursorPosX(200);
+               ImGui::SetCurrentFont(m_overlayBoldFont);
+               ImGui::Text("Overlay adjustments");
+               ImGui::SetCurrentFont(m_overlayFont);
+
+
+               if (m_player->m_stereo3D == STEREO_VR)
+               {
+                  if (setupModeValue == 5)
+                     setupModeValue = 7;
+                  if (setupModeValue == 6)
+                     setupModeValue = 4;
+               }
+               else
+               {
+                  if (setupModeValue == 4)
+                     setupModeValue = maxSetupModeValue;
+                  if (setupModeValue == 0)
+                     setupModeValue = 5;
+                  if (setupModeValue == 16)
+                     setupModeValue = 18;
+                  if (setupModeValue == 17)
+                     setupModeValue = 15;
+               }
+
+
+               if (m_player->m_stereo3D == STEREO_VR)
+               {
+
+                  ImGui::SetCursorPosX(200);
+                  if (setupModeValue == 0)
+                  {
+                     textcolor = launcherHighlight;
+                     markercolor = launcherHighlight;
+                  }
+                  else
+                  {
+                     textcolor = ImVec4(1, 1, 1, 1);
+                     markercolor = ImVec4(0, 1, 0, 0);
+                  }
+                  ImGui::TextColored(markercolor, "==> ");
+                  ImGui::SameLine();
+                  ImGui::TextColored(textcolor, "EyeDistance VR ... %d", (int)launcherVersatz);
+
+
+                  ImGui::SetCursorPosX(200);
+                  if (setupModeValue == 1)
+                  {
+                     textcolor = launcherHighlight;
+                     markercolor = launcherHighlight;
+                  }
+                  else
+                  {
+                     textcolor = ImVec4(1, 1, 1, 1);
+                     markercolor = ImVec4(0, 1, 0, 0);
+                  }
+                  ImGui::TextColored(markercolor, "==> ");
+                  ImGui::SameLine();
+                  ImGui::TextColored(textcolor, "FontScale VR (restart table) ... %d %%", (int)(fontFactor * 100));
+
+
+                  ImGui::SetCursorPosX(200);
+                  if (setupModeValue == 2)
+                  {
+                     textcolor = launcherHighlight;
+                     markercolor = launcherHighlight;
+                  }
+                  else
+                  {
+                     textcolor = ImVec4(1, 1, 1, 1);
+                     markercolor = ImVec4(0, 1, 0, 0);
+                  }
+                  ImGui::TextColored(markercolor, "==> ");
+                  ImGui::SameLine();
+                  ImGui::TextColored(textcolor, "TopPosition VR ... %d %%", (int)(launcherVersatzY / 400 * 100));
+
+
+                  ImGui::SetCursorPosX(200);
+                  if (setupModeValue == 3)
+                  {
+                     textcolor = launcherHighlight;
+                     markercolor = launcherHighlight;
+                  }
+                  else
+                  {
+                     textcolor = ImVec4(1, 1, 1, 1);
+                     markercolor = ImVec4(0, 1, 0, 0);
+                  }
+                  ImGui::TextColored(markercolor, "==> ");
+                  ImGui::SameLine();
+                  ImGui::TextColored(textcolor, "Width VR ... %d %%", (int)(launcherWindowSizeVRx * 100));
+
+                  ImGui::SetCursorPosX(200);
+                  if (setupModeValue == 4)
+                  {
+                     textcolor = launcherHighlight;
+                     markercolor = launcherHighlight;
+                  }
+                  else
+                  {
+                     textcolor = ImVec4(1, 1, 1, 1);
+                     markercolor = ImVec4(0, 1, 0, 0);
+                  }
+                  ImGui::TextColored(markercolor, "==> ");
+                  ImGui::SameLine();
+                  ImGui::TextColored(textcolor, "Height VR ... %d %%", (int)(launcherWindowSizeVRy * 100));
+               }
+               else
+               {
+
+                  ImGui::SetCursorPosX(200);
+                  if (setupModeValue == 5)
+                  {
+                     textcolor = launcherHighlight;
+                     markercolor = launcherHighlight;
+                  }
+                  else if (m_player->m_stereo3D == STEREO_VR)
+                  {
+                     textcolor = ImVec4(1, 1, 1, 0.2f);
+                     markercolor = ImVec4(0, 1, 0, 0);
+                  }
+                  else
+                  {
+                     textcolor = ImVec4(1, 1, 1, 1);
+                     markercolor = ImVec4(0, 1, 0, 0);
+                  }
+                  ImGui::TextColored(markercolor, "==> ");
+                  ImGui::SameLine();
+                  ImGui::TextColored(textcolor, "Width 2D ... %d %%", (int)(launcherWindowSizeX * 100));
+
+                  ImGui::SetCursorPosX(200);
+                  if (setupModeValue == 6)
+                  {
+                     textcolor = launcherHighlight;
+                     markercolor = launcherHighlight;
+                  }
+                  else if (m_player->m_stereo3D == STEREO_VR)
+                  {
+                     textcolor = ImVec4(1, 1, 1, 0.2f);
+                     markercolor = ImVec4(0, 1, 0, 0);
+                  }
+                  else
+                  {
+                     textcolor = ImVec4(1, 1, 1, 1);
+                     markercolor = ImVec4(0, 1, 0, 0);
+                  }
+                  ImGui::TextColored(markercolor, "==> ");
+                  ImGui::SameLine();
+                  ImGui::TextColored(textcolor, "Height 2D ... %d %%", (int)(launcherWindowSizeY * 100));
+               }
+
+               ImGui::SetCursorPosX(200);
+               if (setupModeValue == 7)
+               {
+                  textcolor = launcherHighlight;
+                  markercolor = launcherHighlight;
+               }
+               else
+               {
+                  textcolor = ImVec4(1, 1, 1, 1);
+                  markercolor = ImVec4(0, 1, 0, 0);
+               }
+               ImGui::TextColored(markercolor, "==> ");
+               ImGui::SameLine();
+               ImGui::TextColored(textcolor, "Bkg Transparency ... %d %%", (int)(launcherWindowTransparency * 100));
+
+               ImGui::SetCursorPosX(200);
+               if (setupModeValue == 8)
+               {
+                  textcolor = launcherHighlight;
+                  markercolor = launcherHighlight;
+               }
+               else
+               {
+                  textcolor = ImVec4(1, 1, 1, 1);
+                  markercolor = ImVec4(0, 1, 0, 0);
+               }
+               ImGui::TextColored(markercolor, "==> ");
+               ImGui::SameLine();
+               ImGui::TextColored(textcolor, "Background Red ... %d %%", (int)(launcherBgRed * 100));
+
+               ImGui::SetCursorPosX(200);
+               if (setupModeValue == 9)
+               {
+                  textcolor = launcherHighlight;
+                  markercolor = launcherHighlight;
+               }
+               else
+               {
+                  textcolor = ImVec4(1, 1, 1, 1);
+                  markercolor = ImVec4(0, 1, 0, 0);
+               }
+               ImGui::TextColored(markercolor, "==> ");
+               ImGui::SameLine();
+               ImGui::TextColored(textcolor, "Background Green ... %d %%", (int)(launcherBgGreen * 100));
+
+               ImGui::SetCursorPosX(200);
+               if (setupModeValue == 10)
+               {
+                  textcolor = launcherHighlight;
+                  markercolor = launcherHighlight;
+               }
+               else
+               {
+                  textcolor = ImVec4(1, 1, 1, 1);
+                  markercolor = ImVec4(0, 1, 0, 0);
+               }
+               ImGui::TextColored(markercolor, "==> ");
+               ImGui::SameLine();
+               ImGui::TextColored(textcolor, "Background Blue ... %d %%", (int)(launcherBgBlue * 100));
+
+
+               ImGui::SetCursorPosX(200);
+               if (setupModeValue == 11)
+               {
+                  textcolor = launcherHighlight;
+                  markercolor = launcherHighlight;
+               }
+               else
+               {
+                  textcolor = ImVec4(1, 1, 1, 1);
+                  markercolor = ImVec4(0, 1, 0, 0);
+               }
+               ImGui::TextColored(markercolor, "==> ");
+               ImGui::SameLine();
+               if (activeLayout == 1)
+               {
+                  ImGui::TextColored(textcolor, "Layout ... Left aligned");
+               }
+               else
+               {
+                  ImGui::TextColored(textcolor, "Layout ... Centered");
+               }
+
+               ImGui::SetCursorPosX(200);
+               if (setupModeValue == 12)
+               {
+                  textcolor = launcherHighlight;
+                  markercolor = launcherHighlight;
+               }
+               else
+               {
+                  textcolor = ImVec4(1, 1, 1, 1);
+                  markercolor = ImVec4(0, 1, 0, 0);
+               }
+               ImGui::TextColored(markercolor, "==> ");
+               ImGui::SameLine();
+               ImGui::TextColored(textcolor, "Highlight Color ... #%d", (int)(highlightChoice));
+
+
+               ImGui::NewLine();
+
+               ImGui::SetCurrentFont(m_overlayBoldFont);
+               ImGui::SetCursorPosX(200);
+               ImGui::Text("Table functions: ");
+               ImGui::SetCurrentFont(m_overlayFont);
+               ImGui::SameLine();
+               std::regex tagPattern("<[^>]*>");
+            std:
+               string title = std::regex_replace(currentObjects[currentSelection].display, tagPattern, " ");
+               ImGui::Text(title.c_str());
+
+               ImGui::SetCursorPosX(200);
+               if (setupModeValue == 13)
+               {
+                  textcolor = launcherHighlight;
+                  markercolor = launcherHighlight;
+               }
+               else
+               {
+                  textcolor = ImVec4(1, 1, 1, 1);
+                  markercolor = ImVec4(0, 1, 0, 0);
+               }
+               ImGui::TextColored(markercolor, "==> ");
+               ImGui::SameLine();
+               if (isFileMarked(currentObjects[currentSelection].filename))
+               {
+                  ImGui::TextColored(textcolor, "Unmark as favorite");
+               }
+               else
+               {
+                  ImGui::TextColored(textcolor, "Mark as favorite");
+               }
+
+               ImGui::SetCursorPosX(200);
+               if (setupModeValue == 14)
+               {
+                  textcolor = launcherHighlight;
+                  markercolor = launcherHighlight;
+               }
+               else
+               {
+                  textcolor = ImVec4(1, 1, 1, 1);
+                  markercolor = ImVec4(0, 1, 0, 0);
+               }
+               ImGui::TextColored(markercolor, "==> ");
+               ImGui::SameLine();
+               ImGui::TextColored(textcolor, "Launch table");
+
+               ImGui::SetCursorPosX(200);
+               if (setupModeValue == 15)
+               {
+                  textcolor = launcherHighlight;
+                  markercolor = launcherHighlight;
+               }
+               else
+               {
+                  textcolor = ImVec4(1, 1, 1, 1);
+                  markercolor = ImVec4(0, 1, 0, 0);
+               }
+               ImGui::TextColored(markercolor, "==> ");
+               ImGui::SameLine();
+               ImGui::TextColored(textcolor, "Tweak menu");
+
+               ImGui::NewLine();
+
+               ImGui::SetCurrentFont(m_overlayBoldFont);
+               ImGui::SetCursorPosX(550);
+               ImGui::SetCursorPosY(60);
+               ImGui::Text("System functions: ");
+               ImGui::SetCurrentFont(m_overlayFont);
+
+               if (m_player->m_stereo3D == STEREO_VR)
+               {
+                  ImGui::SetCursorPosX(550);
+                  if (setupModeValue == 16)
+                  {
+                     textcolor = launcherHighlight;
+                     markercolor = launcherHighlight;
+                  }
+                  else
+                  {
+                     textcolor = ImVec4(1, 1, 1, 1);
+                     markercolor = ImVec4(0, 1, 0, 0);
+                  }
+                  ImGui::TextColored(markercolor, "==> ");
+                  ImGui::SameLine();
+                  ImGui::TextColored(textcolor, "Recenter View");
+
+                  ImGui::SetCursorPosX(550);
+                  if (setupModeValue == 17)
+                  {
+                     textcolor = launcherHighlight;
+                     markercolor = launcherHighlight;
+                  }
+                  else
+                  {
+                     textcolor = ImVec4(1, 1, 1, 1);
+                     markercolor = ImVec4(0, 1, 0, 0);
+                  }
+                  ImGui::TextColored(markercolor, "==> ");
+                  ImGui::SameLine();
+                  ImGui::TextColored(textcolor, "Table height");
+               }
+
+
+               ImGui::SetCursorPosX(550);
+               if (setupModeValue == 18)
+               {
+                  textcolor = launcherHighlight;
+                  markercolor = launcherHighlight;
+                  ImGui::TextColored(markercolor, "==> ");
+                  ImGui::SameLine();
+                  ImGui::TextColored(textcolor, "Exit VPX Launcher (%d)", 3 - secureCounter);
+               }
+               else
+               {
+                  textcolor = ImVec4(1, 1, 1, 1);
+                  markercolor = ImVec4(0, 1, 0, 0);
+                  ImGui::TextColored(markercolor, "==> ");
+                  ImGui::SameLine();
+                  ImGui::TextColored(textcolor, "Exit VPX Launcher");
+               }
+
+               ImGui::SetCursorPosX(550);
+               if (setupModeValue == 19)
+               {
+                  textcolor = launcherHighlight;
+                  markercolor = launcherHighlight;
+                  ImGui::TextColored(markercolor, "==> ");
+                  ImGui::SameLine();
+                  ImGui::TextColored(textcolor, "Shutdown Windows (%d)", 3 - secureCounter);
+               }
+               else
+               {
+                  textcolor = ImVec4(1, 1, 1, 1);
+                  markercolor = ImVec4(0, 1, 0, 0);
+                  ImGui::TextColored(markercolor, "==> ");
+                  ImGui::SameLine();
+                  ImGui::TextColored(textcolor, "Shutdown Windows");
+               }
+
+               ImGui::NewLine();
+
+               textcolor = ImVec4(0.5, 0.5, 0.5, 1);
+               ImGui::SetCursorPosX(550);
+               ImGui::SetCurrentFont(m_overlayBoldFont);
+               ImGui::TextColored(textcolor, "Overlay Infos");
+               ImGui::SetCurrentFont(m_overlayFont);
+               ImGui::SetCursorPosX(550);
+               ImGui::TextColored(textcolor, "flip x-axis: %d", flipAxis);
+               ImGui::SetCursorPosX(550);
+               ImGui::TextColored(textcolor, "Render probes: %d", m_live_table->m_vrenderprobe.size());
+               ImGui::NewLine();
+            }
+
+            if (filterMode)
+            {
+               float alpha = 0.6f;
+               int totalEntries = filters.size();
+               int startIndex = (filters[activeFilter].id - (filterItems / 2) + totalEntries) % totalEntries;
+
+               ImGui::SetCursorPosX(0);
+               ImGui::SetCursorPosY(0);
+
+               ImGui::Text("Setup: ");
+               ImGui::SameLine(0.0f, 0.0f);
+               if (activeSetup == 1)
+               {
+                  ImGui::TextColored(ImVec4(1, 1, 0, 1), "Alternative");
+               }
+               else
+               {
+                  ImGui::TextColored(ImVec4(1, 1, 0, 1), "Default");
+               }
+
+               ImGui::Text("Tables: ");
+               ImGui::SameLine(0.0f, 0.0f);
+               ImGui::TextColored(ImVec4(1, 1, 1, 1), tablePath.c_str());
+               ImGui::Text("Settings: ");
+               ImGui::SameLine(0.0f, 0.0f);
+               ImGui::TextColored(ImVec4(1, 1, 1, 1), m_app->m_szMyIniPath.c_str());
+
+               ImGui::NewLine();
+
+               ImGui::TextColored(ImVec4(1, 1, 0, 1), "* ");
+               ImGui::SameLine();
+               ImGui::TextColored(ImVec4(1, 1, 1, 1), "only favorites");
+               ImGui::TextColored(ImVec4(1, 0, 0, 1), "* ");
+               ImGui::SameLine();
+               ImGui::TextColored(ImVec4(1, 1, 1, 1), "without favorites");
+               ImGui::TextColored(ImVec4(1, 1, 0, 1), "Systemfilter");
+               ImGui::TextColored(ImVec4(1, 1, 1, 1), "Customfilter");
+
+               float windowWidth = ImGui::GetWindowWidth();
+
+               ImGui::SetCursorPosY(((launcherWinSize.y - 80) - 13 * m_overlayFont->FontSize) / 2);
+
+               std::string title = "Select Filter:";
+
+               std::string tmptitle = "";
+               int textWidth = ImGui::CalcTextSize(title.c_str()).x;
+               int padding = (windowWidth - textWidth) / 2.f;
+               ImGui::SetCursorPosX(padding);
+               ImGui::TextColored(launcherHighlight, "%s", title.c_str());
+
+               ImGui::NewLine();
+
+
+               for (int i = 0; i < (filterItems + 1); i++)
+               {
+                  alpha = 1.0 - 0.15 * std::abs(i - (filterItems / 2));
+
+                  // Display 4 before, 1 selected, 4 after
+                  int displayIndex = (startIndex + i) % totalEntries;
+                  title = filters[displayIndex].filtername;
+                  if (filters[displayIndex].count > -1)
+                  {
+                     title = title + " (" + std::to_string(filters[displayIndex].count) + ")";
+                  }
+
+                  if (i == 5)
+                  {
+                     if (filters[displayIndex].id == 1 || filters[displayIndex].forbidden != "")
+                     {
+                        tmptitle = "* " + title + " *";
+                     }
+                     else
+                     {
+                        tmptitle = title;
+                     }
+
+                     textWidth = ImGui::CalcTextSize(tmptitle.c_str()).x;
+                     padding = (windowWidth - textWidth) / 2.f;
+                     ImGui::SetCursorPosX(padding);
+                     if (filters[displayIndex].id == 1 || filters[displayIndex].forbidden == "1")
+                     {
+                        ImGui::TextColored(ImVec4(1, 1, 0, 1), "* ");
+                        ImGui::SameLine(0.0f, 0.0f);
+                        ImGui::TextColored(launcherHighlight, "%s", title.c_str());
+                        ImGui::SameLine(0.0f, 0.0f);
+                        ImGui::TextColored(ImVec4(1, 1, 0, 1), " *");
+                     }
+                     else if (filters[displayIndex].forbidden == "2")
+                     {
+                        ImGui::TextColored(ImVec4(1, 0, 0, 1), "* ");
+                        ImGui::SameLine(0.0f, 0.0f);
+                        ImGui::TextColored(launcherHighlight, "%s", title.c_str());
+                        ImGui::SameLine(0.0f, 0.0f);
+                        ImGui::TextColored(ImVec4(1, 0, 0, 1), " *");
+                     }
+                     else
+                     {
+                        ImGui::TextColored(launcherHighlight, "%s", title.c_str());
+                     }
+                  }
+                  else
+                  {
+                     if (filters[displayIndex].id == 1 || filters[displayIndex].forbidden != "")
+                     {
+                        tmptitle = "* " + title + " *";
+                     }
+                     else
+                     {
+                        tmptitle = title;
+                     }
+                     textWidth = ImGui::CalcTextSize(tmptitle.c_str()).x;
+                     padding = (windowWidth - textWidth) / 2.f;
+                     ImGui::SetCursorPosX(padding);
+                     if (filters[displayIndex].id == 1 || filters[displayIndex].forbidden == "1")
+                     {
+                        ImGui::TextColored(ImVec4(1, 1, 0, alpha), "* ");
+                        ImGui::SameLine(0.0f, 0.0f);
+                        if (filters[displayIndex].id < 6)
+                        {
+                           ImGui::TextColored(ImVec4(1, 1, 0, alpha), "%s", title.c_str());
+                        }
+                        else
+                        {
+                           ImGui::TextColored(ImVec4(1, 1, 1, alpha), "%s", title.c_str());
+                        }
+                        ImGui::SameLine(0.0f, 0.0f);
+                        ImGui::TextColored(ImVec4(1, 1, 0, alpha), " *");
+                     }
+                     else if (filters[displayIndex].forbidden == "2")
+                     {
+                        ImGui::TextColored(ImVec4(1, 0, 0, alpha), "* ");
+                        ImGui::SameLine(0.0f, 0.0f);
+                        if (filters[displayIndex].id < 6)
+                        {
+                           ImGui::TextColored(ImVec4(1, 1, 0, alpha), "%s", title.c_str());
+                        }
+                        else
+                        {
+                           ImGui::TextColored(ImVec4(1, 1, 1, alpha), "%s", title.c_str());
+                        }
+                        ImGui::SameLine(0.0f, 0.0f);
+                        ImGui::TextColored(ImVec4(1, 0, 0, alpha), " *");
+                     }
+                     else
+                     {
+                        if (filters[displayIndex].id < 6)
+                        {
+                           ImGui::TextColored(ImVec4(1, 1, 0, alpha), "%s", title.c_str());
+                        }
+                        else
+                        {
+                           ImGui::TextColored(ImVec4(1, 1, 1, alpha), "%s", title.c_str());
+                        }
+                     }
+                  }
+               }
+            }
+
+            if (!setupMode && !filterMode)
+            {
+               //int totalFiles = fileInfos.size();
+               //int startIndex = (currentSelection - 4 + totalFiles) % totalFiles;
+               float alpha = 0.6f;
+               int totalEntries = currentObjects.size();
+               int startIndex = (currentSelection - (launcherItems / 2) + totalEntries) % totalEntries;
+
+               float windowWidth = ImGui::GetWindowWidth();
+
+               imageSize = launcherWinSize.x / 8;
+
+               if (imageSize > 100)
+               {
+                  imageSize = 100;
+               }
+
+               int thisImageBigSizeY = launcherWinSize.y - 120;
+               if (thisImageBigSizeY > 480)
+               {
+                  thisImageBigSizeY = 480;
+               }
+
+               int thisImageBigSizeX = thisImageBigSizeY * imageBigSizeX / imageBigSizeY;
+
+               if (swapImage)
+               {
+
+                  swapImage = false;
+                  std::string imagefilename = "";
+
+                  if (renderWheels)
+                  {
+                     imagefilename = exePath + "wheels\\" + currentObjects[currentSelection].name + " (" + currentObjects[currentSelection].manufacturer + ").png";
+                     if (fs::exists(imagefilename))
+                     {
+                        myTextureID = LoadImageSpecial(imagefilename.c_str(), imageSize, imageSize);
+                     }
+                     else
+                     {
+                        imagefilename = exePath + "wheels\\" + currentObjects[currentSelection].display + " (" + currentObjects[currentSelection].manufacturer + ").png";
+                        if (fs::exists(imagefilename))
+                        {
+                           myTextureID = LoadImageSpecial(imagefilename.c_str(), imageSize, imageSize);
+                        }
+                        else
+                        {
+                           myTextureID = myDummyTextureID;
+                        }
+                     }
+                  }
+
+
+                  if (renderTables)
+                  {
+                     imagefilename = exePath + "tables\\" + currentObjects[currentSelection].name + " (" + currentObjects[currentSelection].manufacturer + ").dat";
+                     if (fs::exists(imagefilename))
+                     {
+                        myTextureBigID = LoadImageSpecial(imagefilename.c_str(), imageBigSizeX, imageBigSizeY);
+                     }
+                     else
+                     {
+                        imagefilename = exePath + "tables\\" + currentObjects[currentSelection].name + " (" + currentObjects[currentSelection].manufacturer + ").png";
+                        if (fs::exists(imagefilename))
+                        {
+                           myTextureBigID = LoadImageSpecial(imagefilename.c_str(), imageBigSizeX, imageBigSizeY);
+                        }
+                        else
+                        {
+                           myTextureBigID = myDummyBigTextureID;
+                        }
+                     }
+                  }
+               }
+
+               ImGui::SetCursorPosX(0);
+               ImGui::SetCursorPosY(0);
+               if (filters[activeFilter].id == 1 || filters[activeFilter].forbidden == "1")
+               {
+                  ImGui::Text("Filter: ");
+                  ImGui::SameLine(0.0f, 0.0f);
+                  ImGui::TextColored(ImVec4(1, 1, 0, 1), "* ");
+                  ImGui::SameLine(0.0f, 0.0f);
+                  if (filterShortMode)
+                  {
+                     ImGui::TextColored(launcherHighlight, "%s", filters[filters[activeFilter].id].filtername.c_str());
+                  }
+                  else
+                  {
+                     ImGui::TextColored(ImVec4(1, 1, 1, 1), "%s", filters[filters[activeFilter].id].filtername.c_str());
+                  }
+                  ImGui::SameLine(0.0f, 0.0f);
+                  ImGui::TextColored(ImVec4(1, 1, 0, 1), " *");
+               }
+               else if (filters[activeFilter].forbidden == "2")
+               {
+                  ImGui::Text("Filter: ");
+                  ImGui::SameLine(0.0f, 0.0f);
+                  ImGui::TextColored(ImVec4(1, 0, 0, 1), "* ");
+                  ImGui::SameLine(0.0f, 0.0f);
+                  if (filterShortMode)
+                  {
+                     ImGui::TextColored(launcherHighlight, "%s", filters[filters[activeFilter].id].filtername.c_str());
+                  }
+                  else
+                  {
+                     ImGui::TextColored(ImVec4(1, 1, 1, 1), "%s", filters[filters[activeFilter].id].filtername.c_str());
+                  }
+                  ImGui::SameLine(0.0f, 0.0f);
+                  ImGui::TextColored(ImVec4(1, 0, 0, 1), " *");
+               }
+               else
+               {
+                  if (filterShortMode)
+                  {
+                     ImGui::TextColored(launcherHighlight, "Filter: %s", filters[filters[activeFilter].id].filtername.c_str());
+                  }
+                  else
+                  {
+                     ImGui::Text("Filter: %s", filters[filters[activeFilter].id].filtername.c_str());
+                  }
+               }
+               ImGui::TextColored(ImVec4(1, 1, 1, 0.7), "Tables: %d", filters[activeFilter].count);
+
+               ImVec4 this_launcherHighlight = launcherHighlight;
+
+               if (filterShortMode)
+               {
+                  this_launcherHighlight = ImVec4(1, 1, 1, 1);
+               }
+
+               // Highscores
+
+
+               float wrap_width = launcherWinSize.x / 4; // Width to wrap the text
+               float DMDfontscale = 1.0;
+               int maxChildHeight = launcherWinSize.y - 220;
+
+               if (m_player->m_stereo3D == STEREO_VR)
+               {
+                  wrap_width = launcherWinSize.x / 4;
+                  DMDfontscale = 1.0;
+                  maxChildHeight = launcherWinSize.y - 220;
+               }
+
+               if (currentObjects[currentSelection].highscores != "")
+               {
+
+                  const char *highscore_text = currentObjects[currentSelection].highscores.c_str();
+                  ImGui::SetCurrentFont(m_highscoreFont);
+                  //ImGui::SetWindowFontScale(DMDfontscale);
+                  ImVec2 text_size = ImGui::CalcTextSize(highscore_text, NULL, false, wrap_width);
+                  int childHeight = text_size.y + 30;
+                  if (childHeight > maxChildHeight)
+                     childHeight = maxChildHeight;
+                  ImGui::SetCursorPosX(windowWidth - wrap_width - 20);
+                  ImGui::SetCursorPosY(imageSize + 35);
+                  // Create a child window with a specified size
+                  // Set a custom background color for the child window
+                  ImVec4 bgColor = ImVec4(0.1f, 0.05f, 0.0f, 0.5f); // 10% white
+                  ImGui::PushStyleColor(ImGuiCol_ChildBg, bgColor);
+                  // Set window rounding
+                  float rounding = 3.0f; // Adjust as needed for the desired roundness
+                  ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, rounding);
+                  ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.0f); // Set to 0.0f to remove the border
+                  ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.5f)); // Black border color
+
+                  ImGui::BeginChild("HighscoresChild", ImVec2(wrap_width, childHeight), true, ImGuiWindowFlags_NoScrollbar);
+
+                  // Revert to the previous style color and rounding
+                  ImGui::PopStyleVar(2);
+                  ImGui::PopStyleColor(2);
+
+                  ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 140, 0, 255));
+
+                  ImGui::SetCursorPosY(20);
+                  ImGui::TextWrapped("%s", highscore_text);
+                  ImGui::PopStyleColor();
+                  // End the child window
+                  ImGui::EndChild();
+                  ImGui::SetCurrentFont(m_overlayFont);
+               }
+
+
+               int padding = 0;
+               int textWidth;
+
+               if (renderWheels)
+               {
+                  padding = (windowWidth - ((wrap_width + imageSize) / 2));
+                  ImGui::SetCursorPosX(padding - 20);
+                  ImGui::SetCursorPosY(50);
+                  ImGui::Image((void *)(intptr_t)myTextureID, ImVec2(imageSize, imageSize)); // Adjust the size as needed
+               }
+
+               if (renderTables)
+               {
+
+                  if (activeLayout == 1)
+                  {
+                     ImGui::SetCursorPosY((launcherWinSize.y - thisImageBigSizeY) / 2);
+                     ImGui::SetCursorPosX(30);
+                     ImGui::Image((void *)(intptr_t)myTextureBackID, ImVec2(thisImageBigSizeY, thisImageBigSizeY)); // Adjust the size as needed
+
+                     ImGui::SetCursorPosY((launcherWinSize.y - thisImageBigSizeY) / 2);
+                     ImGui::SetCursorPosX(30);
+                     ImGui::Image((void *)(intptr_t)myTextureBigID, ImVec2(thisImageBigSizeX, thisImageBigSizeY)); // Adjust the size as needed
+                  }
+                  else
+                  {
+                     ImGui::SetCursorPosY((launcherWinSize.y - thisImageBigSizeY) / 2);
+                     ImGui::SetCursorPosX((launcherWinSize.x / 3 - thisImageBigSizeX) / 2);
+                     ImGui::Image((void *)(intptr_t)myTextureBackID, ImVec2(thisImageBigSizeY, thisImageBigSizeY)); // Adjust the size as needed
+
+                     ImGui::SetCursorPosY((launcherWinSize.y - thisImageBigSizeY) / 2);
+                     ImGui::SetCursorPosX((launcherWinSize.x / 3 - thisImageBigSizeX) / 2);
+                     ImGui::Image((void *)(intptr_t)myTextureBigID, ImVec2(thisImageBigSizeX, thisImageBigSizeY)); // Adjust the size as needed
+                  }
+               }
+
+
+               ImGui::SetCurrentFont(m_digitalBigFont);
+               std::string title = currentObjects[currentSelection].display;
+               std::string tmptitle = "";
+               std::vector<std::string> titleLines;
+               std::string delimiter = "<br>";
+
+               if (filters[activeFilter].id == 4)
+               {
+                  // filebrowser
+                  title = brIntoMiddle(title);
+               }
+
+
+               size_t start = 0;
+               size_t end = title.find(delimiter);
+
+               while (end != std::string::npos)
+               {
+                  titleLines.push_back(title.substr(start, end - start));
+                  start = end + delimiter.length();
+                  end = title.find(delimiter, start);
+               }
+               titleLines.push_back(title.substr(start, end - start));
+
+               int linereduction = titleLines.size() * 20;
+
+               ImGui::SetCursorPosY(90 - linereduction);
+
+               for (const std::string &line : titleLines)
+               {
+                  ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 8);
+                  textWidth = ImGui::CalcTextSize(line.c_str()).x;
+                  padding = (windowWidth - textWidth) / 2.f;
+                  if (activeLayout == 1)
+                  {
+                     padding = 30 + thisImageBigSizeX + 30;
+                  }
+                  ImGui::SetCursorPosX(padding);
+                  ImGui::TextColored(launcherHighlight, "%s", line.c_str());
+               }
+
+
+               ImGui::SetWindowFontScale(1.0f);
+
+               ImGui::SetCurrentFont(m_digitalFont);
+
+               title = "---  " + currentObjects[currentSelection].manufacturer + "  ---";
+               textWidth = ImGui::CalcTextSize(title.c_str()).x;
+               padding = (windowWidth - textWidth) / 2.f;
+               if (activeLayout == 1)
+               {
+                  title = currentObjects[currentSelection].manufacturer;
+                  padding = 30 + thisImageBigSizeX + 30;
+               }
+               ImGui::SetCursorPosX(padding);
+               ImGui::TextColored(ImVec4(1, 1, 1, 1), "%s", title.c_str());
+
+               ImGui::SetCurrentFont(m_overlayFont);
+               ImGui::SetWindowFontScale(0.75f);
+               textWidth = ImGui::CalcTextSize(extractFileName(currentObjects[currentSelection].filename).c_str()).x;
+               padding = (windowWidth - textWidth) / 2.f;
+               if (activeLayout == 1)
+               {
+                  padding = 30 + thisImageBigSizeX + 30;
+               }
+               ImGui::SetCursorPosX(padding);
+               ImGui::Text("%s", extractFileName(currentObjects[currentSelection].filename).c_str());
+               ImGui::SetWindowFontScale(1.0f);
+
+               ImGui::NewLine();
+
+               int headerTopPosition = ImGui::GetCursorPosY();
+               int centerTopPosition = ((launcherWinSize.y - 60) - 11 * m_overlayFont->FontSize) / 2;
+
+               if (centerTopPosition > headerTopPosition)
+
+                  ImGui::SetCursorPosY(centerTopPosition);
+
+               // Regular expression to match tags
+               std::regex tagPattern("<[^>]*>");
+
+
+               for (int i = 0; i < (launcherItems + 1); i++)
+               {
+                  alpha = 1.0 - 0.15 * std::abs(i - (launcherItems / 2));
+
+                  // Display 4 before, 1 selected, 4 after
+                  int displayIndex = (startIndex + i) % totalEntries;
+                  if (displayIndex == currentSelection)
+                  {
+                     title = std::regex_replace(currentObjects[displayIndex].display, tagPattern, " ");
+
+                     ImVec4 nextColor(0, 1, 0, alpha);
+
+                     if (filters[activeFilter].id != 4)
+                     {
+                        // no filebrowser
+                        title = title + " (" + currentObjects[displayIndex].manufacturer + ")";
+                     }
+                     else
+                     {
+                        if (currentObjects[displayIndex].manufacturer != "assignable")
+                        {
+                           nextColor = ImVec4(1, 0.8, 0, alpha);
+                        }
+                     }
+
+
+                     if (currentObjects[displayIndex].favorite)
+                     {
+                        tmptitle = "* " + title + " *";
+                        if (activeLayout == 1)
+                        {
+                           tmptitle = title + " *";
+                        }
+                     }
+                     else
+                     {
+                        tmptitle = title;
+                     }
+                     textWidth = ImGui::CalcTextSize(tmptitle.c_str()).x;
+                     padding = (windowWidth - textWidth) / 2.f;
+                     if (activeLayout == 1)
+                     {
+                        padding = 30 + thisImageBigSizeX + 30;
+                     }
+                     ImGui::SetCursorPosX(padding);
+                     if (currentObjects[displayIndex].favorite)
+                     {
+                        if (activeLayout != 1)
+                        {
+                           ImGui::TextColored(ImVec4(1, 1, 0, alpha), "* ");
+                           ImGui::SameLine(0.0f, 0.0f);
+                        }
+                        ImGui::TextColored(this_launcherHighlight, "%s", title.c_str());
+                        ImGui::SameLine(0.0f, 0.0f);
+                        ImGui::TextColored(ImVec4(1, 1, 0, alpha), " *");
+                     }
+                     else
+                     {
+                        ImGui::TextColored(this_launcherHighlight, "%s", title.c_str());
+                     }
+                  }
+                  else
+                  {
+                     title = std::regex_replace(currentObjects[displayIndex].display, tagPattern, " ");
+
+                     ImVec4 nextColor(1, 1, 1, alpha);
+
+                     if (filters[activeFilter].id != 4)
+                     {
+                        // no filebrowser
+                        title = title + " (" + currentObjects[displayIndex].manufacturer + ")";
+                     }
+                     else
+                     {
+
+                        if (currentObjects[displayIndex].manufacturer != "assignable")
+                        {
+                           nextColor = ImVec4(1, 0.8, 0, alpha);
+                        }
+                     }
+
+
+                     if (currentObjects[displayIndex].favorite)
+                     {
+                        tmptitle = "* " + title + " *";
+                        if (activeLayout == 1)
+                        {
+                           tmptitle = title + " *";
+                        }
+                     }
+                     else
+                     {
+                        tmptitle = title;
+                     }
+                     textWidth = ImGui::CalcTextSize(tmptitle.c_str()).x;
+                     padding = (windowWidth - textWidth) / 2.f;
+                     if (activeLayout == 1)
+                     {
+                        padding = 30 + thisImageBigSizeX + 30;
+                     }
+                     ImGui::SetCursorPosX(padding);
+                     if (currentObjects[displayIndex].favorite)
+                     {
+                        if (activeLayout != 1)
+                        {
+                           ImGui::TextColored(ImVec4(1, 1, 0, alpha), "* ");
+                           ImGui::SameLine(0.0f, 0.0f);
+                        }
+                        ImGui::TextColored(nextColor, "%s", title.c_str());
+                        ImGui::SameLine(0.0f, 0.0f);
+                        ImGui::TextColored(ImVec4(1, 1, 0, alpha), " *");
+                     }
+                     else
+                     {
+                        ImGui::TextColored(nextColor, "%s", title.c_str());
+                     }
+                  }
+               }
+            }
+            ImGui::NewLine();
+         }
+         else
+         {
+            ImGui::SetCurrentFont(m_overlayBoldFont);
+            ImGui::Text("Your Launcher settings are not ok.");
+            ImGui::SetCurrentFont(m_overlayFont);
+            ImGui::NewLine();
+            ImGui::Text("First check your Table-Path under Launcher-Settings.");
+            ImGui::TextColored(ImVec4(0.5, 0.5, 0, 1), "PATH: %s", tablePath);
+         }
+
+
+         lastHeight = ImGui::GetCursorPos().y - ImGui::GetCursorStartPos().y; // Height of content
+
+         if (launcherLastHeight == 0)
+         {
+            launcherLastHeight = lastHeight;
+            swapImage = true;
+         }
+      }
+      ImGui::EndChild();
+      ImGui::NewLine();
+   }
    else if (m_activeTweakPage == TP_Info)
    {
       static float lastHeight = 0.f, maxScroll = 0.f;
@@ -4220,8 +6130,10 @@ void LiveUI::UpdateTweakModeUI()
    }
 
    ImGui::NewLine();
-   vector<string> infos;
-   if (m_activeTweakPage != TP_Rules && m_activeTweakPage != TP_Info)
+   vector<string> infos; 
+   
+   // Launcher
+   if (m_activeTweakPage != TP_Rules && m_activeTweakPage != TP_Info && m_activeTweakPage != TP_Launcher)
    {
       infos.push_back("Plunger Key:   Reset page to defaults"s);
       if (m_app->m_povEdit)
@@ -4241,11 +6153,91 @@ void LiveUI::UpdateTweakModeUI()
          infos.push_back("Arrows & Left Alt Key:   Navigate around"s);
       }
    }
-   infos.push_back(activeTweakSetting == BS_Page ? "Flipper keys:   Previous/Next page"s : "Flipper keys:   Adjust highlighted value"s);
+
+   if (m_activeTweakPage == TP_Launcher) // Launcher
+   {
+
+      if (!setupMode && !filterMode && (m_player->m_stereo3D == STEREO_VR))
+      {
+         infos.push_back(launcherFilterKey + ":   Launcher settings"s);
+      }
+
+      if (setupMode && !filterMode)
+      {
+         infos.push_back(launcherFilterKey + ":   Close settings"s);
+      }
+
+      if (!filterMode && !setupMode)
+      {
+         infos.push_back(launcherStartKey + ":   Launch selected table"s);
+         infos.push_back(launcherFilterKey + ":   Filter selection"s);
+         infos.push_back(launcherUpKey + "/" + launcherDownKey + ":   Previous/Next table"s);
+         infos.push_back(launcherFavoriteKey + ":   Toggle favorite"s);
+         infos.push_back(launcherRandomizeKey + ":   Randomize table"s);
+      }
+
+      if (filterMode && !setupMode)
+      {
+         infos.push_back(launcherFilterKey + ":   Save startfilter"s);
+         infos.push_back(launcherStartKey + ":   Select filter"s);
+      }
+      infos.push_back("Exit Key:   Resume to game"s);
+      infos.push_back("Hold Exit Key:   Close VPX"s);
+   }
+
+   if (setupMode)
+   {
+      infos.push_back(launcherLeftKey + "/" + launcherRightKey + ":   Adjust highlighted value"s);
+      infos.push_back(launcherUpKey + "/" + launcherDownKey + ":   Previous/Next option"s);
+   }
+   else if (filterMode)
+   {
+      infos.push_back(launcherUpKey + "/" + launcherDownKey + ":   Previous/Next filter"s);
+   }
+   else
+   {
+      if (m_activeTweakPage == TP_Launcher)
+      {
+         infos.push_back(launcherJumpUpKey + "/" + launcherJumpDownKey + ": Previous/Next Alpha"s);
+      }
+      else
+      {
+         infos.push_back(activeTweakSetting == BS_Page ? "Flipper keys:   Previous/Next page"s : "Flipper keys:   Adjust highlighted value"s);
+      }
+   }
+
    const int info = (((int)((msec() - m_StartTime_msec) / 2000ull))) % (int)infos.size();
    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
-   HelpTextCentered(infos[info]);
+   // Launcher
+   float windowWidth = ImGui::GetWindowWidth();
+
+   if (m_activeTweakPage == TP_Launcher)
+   {
+      ImGui::SetCursorPosY(launcherWinSize.y - m_overlayFont->FontSize - 10);
+      int textWidth = ImGui::CalcTextSize(infos[info].c_str()).x;
+      int padding = (windowWidth - textWidth) / 2.f;
+      ImGui::SetCursorPosX(padding);
+      ImGui::TextColored(ImVec4(0.5, 0.5, 0.5, 1.0), "%s", infos[info].c_str());
+   }
+   else
+   {
+      HelpTextCentered(infos[info]);
+   }
+
    ImGui::PopStyleColor();
+
+   if (m_activeTweakPage == TP_Launcher)
+   {
+
+      ImGui::SetCursorPosY(launcherWinSize.y - 24 - 10);
+      ImGui::SetCursorPosX((windowWidth - 159 - 10));
+      ImGui::Image((void *)(intptr_t)myLogoTextureID, ImVec2(159, 24));
+
+      ImGui::SetCursorPosY(launcherWinSize.y - m_overlayFont->FontSize - 10);
+
+      ImGui::SetCursorPosX(10);
+      ImGui::TextColored(ImVec4(0.5, 0.5, 0.5, 1.0), "%s", launcherVersion.c_str());
+   }
 
    ImGui::End();
 }
