@@ -119,6 +119,10 @@ PinInput::PinInput()
    m_exit_stamp = 0;
    m_first_stamp = msec();
 
+   // Launcher
+   m_launcherTime_msec = msec();
+   m_launcherStop_msec = msec();
+
    m_as_down = false;
    m_as_didonce = false;
 
@@ -1179,9 +1183,22 @@ void PinInput::ButtonExit(const U32 msecs, const U32 curr_time_msec)
       return;
 
    // Check if we can exit.
-   if (m_exit_stamp &&                         // Initialized.
+   if (m_exit_stamp && // Initialized.
       (curr_time_msec - m_exit_stamp > msecs)) // Held exit button for number of mseconds.
    {
+      // Launcher
+      // force exit
+      HKEY hKey;
+      const char *subKey = "SOFTWARE\\Visual Pinball\\VP10\\Launcher";
+      LONG result = RegCreateKeyEx(HKEY_CURRENT_USER, subKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
+      if (result == ERROR_SUCCESS)
+      {
+         // Value to write
+         int valueToWrite = 3;
+         // Write the string value to the registry
+         result = RegSetValueEx(hKey, "launchForceExit", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+         RegCloseKey(hKey);
+      }
       g_pvp->QuitPlayer(Player::CloseState::CS_CLOSE_APP);
    }
 }
@@ -1267,8 +1284,41 @@ void PinInput::Joy(const unsigned int n, const int updown, const bool start)
    }
    if (m_joyexitgamekey == n)
    {
-      if (DISPID_GameEvents_KeyDown == updown)
-         g_pplayer->SetCloseState(Player::CS_USER_INPUT);
+      // Launcher kill joyexitgame
+      if (!g_pplayer->m_liveUI->IsOpened() && DISPID_GameEvents_KeyUp == updown)
+      {
+         m_exit_stamp = 0;
+
+         if (m_launcherTime_msec >= 0)
+         {
+            ButtonExit(g_pplayer->m_ptable->m_tblExitConfirm, m_launcherStop_msec);
+            m_launcherTime_msec = 0;
+         }
+
+         // Launcher
+         // Open TweakMode instead of exitwindow
+
+         if (g_pplayer->m_liveUI->IsTweakMode())
+         {
+            if (g_pplayer->m_ptable->m_szTitle != "dummy")
+            {
+               g_pplayer->m_launcherActive = false;
+               g_pplayer->m_liveUI->HideUI();
+            }
+         }
+         else
+         {
+            g_pplayer->m_launcherActive = true;
+            g_pplayer->m_liveUI->OpenTweakMode();
+         }
+      }
+      else if (!g_pplayer->m_liveUI->IsOpened() && DISPID_GameEvents_KeyDown == updown)
+      {
+         m_launcherStop_msec = m_launcherTime_msec;
+         m_exit_stamp = m_launcherTime_msec;
+      }
+      //if (DISPID_GameEvents_KeyDown == updown)
+      // g_pplayer->SetCloseState(Player::CS_USER_INPUT);
    }
    if (m_joyframecount == n)
    {
@@ -1429,6 +1479,10 @@ void PinInput::ProcessJoystick(const DIDEVICEOBJECTDATA * __restrict input, int 
     {
         const int updown = (input->dwData & 0x80) ? DISPID_GameEvents_KeyDown : DISPID_GameEvents_KeyUp;
         const bool start = ((curr_time_msec - m_firedautostart) > g_pplayer->m_ptable->m_tblAutoStart) || m_pressed_start || Started();
+
+        // Launcher
+        m_launcherTime_msec = curr_time_msec;
+
         if (input->dwOfs == DIJOFS_BUTTON0)
         {
             if (((uShockType == USHOCKTYPE_PBWIZARD) || (uShockType == USHOCKTYPE_VIRTUAPIN)) && !m_override_default_buttons) // plunge
@@ -2025,6 +2079,23 @@ void PinInput::ProcessKeys(/*const U32 curr_sim_msec,*/ int curr_time_msec) // l
          {
             if ((input->dwData & 0x80) != 0)
                g_pplayer->m_liveUI->PausePlayer(!g_pplayer->m_debugWindowActive);
+
+            // Launcher
+            if (g_pplayer->m_liveUI->IsTweakMode())
+            {
+               if (g_pplayer->m_ptable->m_szTitle != "dummy")
+               {
+                  g_pplayer->m_launcherActive = false;
+                  g_pplayer->m_liveUI->HideUI();
+               }
+            }
+            else
+            {
+               g_pplayer->m_launcherActive = true;
+               g_pplayer->m_liveUI->OpenTweakMode();
+            }
+
+
          }
          else if (input->dwOfs == (DWORD)g_pplayer->m_rgKeys[eTweak])
          {
@@ -2033,6 +2104,7 @@ void PinInput::ProcessKeys(/*const U32 curr_sim_msec,*/ int curr_time_msec) // l
                if (g_pplayer->m_liveUI->IsTweakMode())
                   g_pplayer->m_liveUI->HideUI();
                else
+                  g_pplayer->m_launcherActive = false; // Launcher
                   g_pplayer->m_liveUI->OpenTweakMode();
             }
          }
@@ -2142,7 +2214,24 @@ void PinInput::ProcessKeys(/*const U32 curr_sim_msec,*/ int curr_time_msec) // l
                else
                {  //on key up only
                   // Open UI on key up since a long press should not trigger the UI (direct exit from the app)
-                  g_pplayer->SetCloseState(Player::CS_USER_INPUT);
+                  
+                  // Launcher
+                  //g_pplayer->SetCloseState(Player::CS_USER_INPUT);
+
+                  if (g_pplayer->m_liveUI->IsTweakMode())
+                  {
+                     if (g_pplayer->m_ptable->m_szTitle != "dummy")
+                     {
+                        g_pplayer->m_launcherActive = false;
+                        g_pplayer->m_liveUI->HideUI();
+                     }
+                  }
+                  else
+                  {
+                     g_pplayer->m_launcherActive = true;
+                     g_pplayer->m_liveUI->OpenTweakMode();
+                  }
+
                   m_exit_stamp = 0;
                }
             }

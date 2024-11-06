@@ -201,6 +201,10 @@ private:
 
    U32 m_firedautostart;
 
+   // Launcher
+   U32 m_launcherTime_msec;
+   U32 m_launcherStop_msec;
+
    U32 m_first_stamp;
    U32 m_exit_stamp;
 
