@@ -28,6 +28,8 @@
 
 #include "wintimer.h"
 
+#define IMGUI_DISABLE_DEBUG_TOOLS
+
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h" // Needed for FindRenderedTextEnd in HelpSplash (should be adapted when this function will refactored in ImGui)
 #ifdef ENABLE_SDL
@@ -5110,6 +5112,7 @@ void LiveUI::UpdateTweakModeUI()
       // Set a custom background color for the child window
       ImVec4 bgColor = ImVec4(launcherBgRed, launcherBgGreen, launcherBgBlue, 0.5f);
       ImGui::PushStyleColor(ImGuiCol_WindowBg, bgColor);
+      ImGui::PopStyleColor();
    }
    else
    {
