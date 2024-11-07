@@ -24,6 +24,8 @@ public:
    // Launcher
    void launchTable();
    void closeVPX(bool shutdown);
+   void launcherSaveValues();
+   void launcherLoadValues();
    void launcherSaveFilter();
    void launcherLoadFilter();
    void launcherLoadFontscale();

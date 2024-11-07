@@ -2583,6 +2583,198 @@ void LiveUI::launchTable()
       }
    }
 }
+
+void LiveUI::launcherSaveValues()
+{
+   // Launcher
+   // Open or create a key
+   HKEY hKey;
+   const char *subKey = "SOFTWARE\\Visual Pinball\\VP10\\Launcher";
+   LONG result = RegCreateKeyEx(HKEY_CURRENT_USER, subKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
+   if (result != ERROR_SUCCESS)
+   {
+      // Error creating/opening registry key
+   }
+   else
+   {
+
+        int valueToWrite = abs((int)(launcherWindowSizeX * 100));
+
+        // Write the string value to the registry
+        result = RegSetValueEx(hKey, "overlayWidth", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+        if (result != ERROR_SUCCESS)
+        {
+            // Error writing to registry
+        }
+        else
+        {
+            valueToWrite = abs((int)(launcherWindowSizeVRx * 100));
+
+            // Write the string value to the registry
+            result = RegSetValueEx(hKey, "overlayWidthVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+            if (result != ERROR_SUCCESS)
+            {
+                // Error writing to registry
+            }
+            else
+            {
+                valueToWrite = abs((int)(launcherWindowTransparency * 100));
+
+                // Write the string value to the registry
+                if (m_player->m_stereo3D == STEREO_VR)
+                {
+                    result = RegSetValueEx(hKey, "overlayTransparencyVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                }
+                else
+                {
+                    result = RegSetValueEx(hKey, "overlayTransparency", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                }
+
+                if (result != ERROR_SUCCESS)
+                {
+                    // Error writing to registry
+                }
+                else
+                {
+
+
+                    valueToWrite = abs((int)(launcherWindowSizeY * 100));
+
+                    // Write the string value to the registry
+                    result = RegSetValueEx(hKey, "overlayHeight", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                    if (result != ERROR_SUCCESS)
+                    {
+                    // Error writing to registry
+                    }
+                    else
+                    {
+                    valueToWrite = abs((int)(launcherWindowSizeVRy * 100));
+
+                    // Write the string value to the registry
+                    result = RegSetValueEx(hKey, "overlayHeightVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                    if (result != ERROR_SUCCESS)
+                    {
+                        // Error writing to registry
+                    }
+                    else
+                    {
+                        valueToWrite = abs((int)(activeLayout));
+
+                        // Write the string value to the registry
+                        if (m_player->m_stereo3D == STEREO_VR)
+                        {
+                            result = RegSetValueEx(hKey, "activeLayoutVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                        }
+                        else
+                        {
+                            result = RegSetValueEx(hKey, "activeLayout", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                        }
+
+                        if (result != ERROR_SUCCESS)
+                        {
+                            // Error writing to registry
+                        }
+                        else
+                        {
+                            valueToWrite = abs((int)(launcherBgRed * 100));
+
+                            // Write the string value to the registry
+                            if (m_player->m_stereo3D == STEREO_VR)
+                            {
+                                result = RegSetValueEx(hKey, "BGredVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                            }
+                            else
+                            {
+                                result = RegSetValueEx(hKey, "BGred", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                            }
+                            if (result != ERROR_SUCCESS)
+                            {
+                                // Error writing to registry
+                            }
+                            else
+                            {
+                                valueToWrite = abs((int)(launcherBgGreen * 100));
+                                // Write the string value to the registry
+                                if (m_player->m_stereo3D == STEREO_VR)
+                                {
+                                result = RegSetValueEx(hKey, "BGgreenVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                                }
+                                else
+                                {
+                                result = RegSetValueEx(hKey, "BGgreen", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                                }
+
+                                if (result != ERROR_SUCCESS)
+                                {
+                                // Error writing to registry
+                                }
+                                else
+                                {
+                                valueToWrite = abs((int)(launcherBgBlue * 100));
+
+                                // Write the string value to the registry
+                                if (m_player->m_stereo3D == STEREO_VR)
+                                {
+                                    result = RegSetValueEx(hKey, "BGblueVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                                }
+                                else
+                                {
+                                    result = RegSetValueEx(hKey, "BGblue", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                                }
+
+                                if (result != ERROR_SUCCESS)
+                                {
+                                    // Error writing to registry
+                                }
+                                else
+                                {
+                                    valueToWrite = abs((int)(highlightChoice));
+
+                                    // Write the string value to the registry
+                                    if (m_player->m_stereo3D == STEREO_VR)
+                                    {
+                                        result = RegSetValueEx(hKey, "highlightColorVR", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                                    }
+                                    else
+                                    {
+                                        result = RegSetValueEx(hKey, "highlightColor", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+                                    }
+
+                                    if (result != ERROR_SUCCESS)
+                                    {
+                                        // Error writing to registry
+                                    }
+                                    else
+                                    {
+                                        valueToWrite = abs((int)(fontFactor * 100));
+
+                                        // Write the string value to the registry
+                                        result = RegSetValueEx(hKey, "VRfontScale", 0, REG_DWORD, reinterpret_cast<const BYTE *>(&valueToWrite), sizeof(valueToWrite));
+
+                                        if (result != ERROR_SUCCESS)
+                                        {
+                                            // Error writing to registry
+                                        }
+                                        else
+                                        {
+                                            // Close the key
+                                            RegCloseKey(hKey);
+                                        }
+                                    }
+                                }
+                                }
+                            }
+                        }
+                    }
+                    }
+                }
+            }
+        }
+         
+      
+   }
+}
+
 void LiveUI::closeVPX(bool shutdown)
 {
    // force exit
@@ -3014,6 +3206,267 @@ void LiveUI::launcherLoadFontscale()
    }
 }
 
+void LiveUI::launcherLoadValues()
+{
+   // Launcher
+   // Open the key
+   HKEY hKey;
+   const char *subKey = "SOFTWARE\\Visual Pinball\\VP10\\Launcher";
+   LONG result = RegOpenKeyEx(HKEY_CURRENT_USER, subKey, 0, KEY_READ, &hKey);
+   if (result != ERROR_SUCCESS)
+   {
+      // Error opening registry key
+   }
+   else
+   {
+      // Variable to store the value read from registry
+      DWORD valueRead;
+      DWORD type = REG_DWORD;
+      DWORD valueSize = sizeof(valueRead);
+
+
+        // Read the DWORD value from the registry
+        result = RegQueryValueEx(hKey, "overlayWidth", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+        if (result != ERROR_SUCCESS)
+        {
+            // Error reading from registry
+        }
+        else
+        {
+            // Successfully read the value, now assign it to the corresponding class member
+            launcherWindowSizeX = static_cast<float>(valueRead);
+            if (launcherWindowSizeX >= 20 && launcherWindowSizeX <= 150)
+            {
+                launcherWindowSizeX = launcherWindowSizeX / 100;
+            }
+            else
+            {
+                launcherWindowSizeX = 0.75f;
+            }
+
+            // Read the DWORD value from the registry
+            if (m_player->m_stereo3D == STEREO_VR)
+            {
+                result = RegQueryValueEx(hKey, "overlayTransparencyVR", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+            }
+            else
+            {
+                result = RegQueryValueEx(hKey, "overlayTransparency", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+            }
+
+            if (result != ERROR_SUCCESS)
+            {
+                // Error reading from registry
+            }
+            else
+            {
+                // Successfully read the value, now assign it to the corresponding class member
+                launcherWindowTransparency = static_cast<float>(valueRead);
+                if (launcherWindowTransparency < 0 || launcherWindowTransparency > 100)
+                {
+                    launcherWindowTransparency = 0.5f;
+                }
+                else
+                {
+                    launcherWindowTransparency = launcherWindowTransparency / 100;
+                }
+
+
+                result = RegQueryValueEx(hKey, "overlayWidthVR", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                if (result != ERROR_SUCCESS)
+                {
+                    // Error reading from registry
+                }
+                else
+                {
+                    // Successfully read the value, now assign it to the corresponding class member
+                    launcherWindowSizeVRx = static_cast<float>(valueRead);
+                    if (launcherWindowSizeVRx >= 20 && launcherWindowSizeVRx <= 150)
+                    {
+                    launcherWindowSizeVRx = launcherWindowSizeVRx / 100;
+                    }
+                    else
+                    {
+                    launcherWindowSizeVRx = 1.05f;
+                    }
+
+                    result = RegQueryValueEx(hKey, "overlayHeight", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                    if (result != ERROR_SUCCESS)
+                    {
+                    // Error reading from registry
+                    }
+                    else
+                    {
+                    // Successfully read the value, now assign it to the corresponding class member
+                    launcherWindowSizeY = static_cast<float>(valueRead);
+                    if (launcherWindowSizeY >= 20 && launcherWindowSizeY <= 150)
+                    {
+                        launcherWindowSizeY = launcherWindowSizeY / 100;
+                    }
+                    else
+                    {
+                        launcherWindowSizeY = 0.8f;
+                    }
+
+                    result = RegQueryValueEx(hKey, "overlayHeightVR", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                    if (result != ERROR_SUCCESS)
+                    {
+                        // Error reading from registry
+                    }
+                    else
+                    {
+                        // Successfully read the value, now assign it to the corresponding class member
+                        launcherWindowSizeVRy = static_cast<float>(valueRead);
+                        if (launcherWindowSizeVRy >= 20 && launcherWindowSizeVRy <= 150)
+                        {
+                            launcherWindowSizeVRy = launcherWindowSizeVRy / 100;
+                        }
+                        else
+                        {
+                            launcherWindowSizeVRy = 1.05f;
+                        }
+
+                        result = RegQueryValueEx(hKey, "activeSetup", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                        if (result != ERROR_SUCCESS)
+                        {
+                            // Error reading from registry
+                        }
+                        else
+                        {
+                            // Successfully read the value, now assign it to the corresponding class member
+                            activeSetup = static_cast<int>(valueRead);
+                            if (m_player->m_stereo3D == STEREO_VR)
+                            {
+                                result = RegQueryValueEx(hKey, "activeLayoutVR", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                            }
+                            else
+                            {
+                                result = RegQueryValueEx(hKey, "activeLayout", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                            }
+
+                            if (result != ERROR_SUCCESS)
+                            {
+                                // Error reading from registry
+                            }
+                            else
+                            {
+                                // Successfully read the value, now assign it to the corresponding class member
+                                activeLayout = static_cast<int>(valueRead);
+
+                                if (m_player->m_stereo3D == STEREO_VR)
+                                {
+                                result = RegQueryValueEx(hKey, "BGredVR", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                                }
+                                else
+                                {
+                                result = RegQueryValueEx(hKey, "BGred", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                                }
+
+                                if (result != ERROR_SUCCESS)
+                                {
+                                // Error reading from registry
+                                }
+                                else
+                                {
+                                // Successfully read the value, now assign it to the corresponding class member
+                                launcherBgRed = static_cast<float>(valueRead);
+                                if (launcherBgRed >= 0 && launcherBgRed <= 100)
+                                {
+                                    launcherBgRed = launcherBgRed / 100;
+                                }
+                                else
+                                {
+                                    launcherBgRed = 0.3f;
+                                }
+
+                                if (m_player->m_stereo3D == STEREO_VR)
+                                {
+                                    result = RegQueryValueEx(hKey, "BGgreenVR", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                                }
+                                else
+                                {
+                                    result = RegQueryValueEx(hKey, "BGgreen", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                                }
+
+                                if (result != ERROR_SUCCESS)
+                                {
+                                    // Error reading from registry
+                                }
+                                else
+                                {
+                                    // Successfully read the value, now assign it to the corresponding class member
+                                    launcherBgGreen = static_cast<float>(valueRead);
+                                    if (launcherBgGreen >= 0 && launcherBgGreen <= 100)
+                                    {
+                                        launcherBgGreen = launcherBgGreen / 100;
+                                    }
+                                    else
+                                    {
+                                        launcherBgGreen = 0.3f;
+                                    }
+                                    if (m_player->m_stereo3D == STEREO_VR)
+                                    {
+                                        result = RegQueryValueEx(hKey, "BGblueVR", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                                    }
+                                    else
+                                    {
+                                        result = RegQueryValueEx(hKey, "BGblue", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                                    }
+
+                                    if (result != ERROR_SUCCESS)
+                                    {
+                                        // Error reading from registry
+                                    }
+                                    else
+                                    {
+                                        // Successfully read the value, now assign it to the corresponding class member
+                                        launcherBgBlue = static_cast<float>(valueRead);
+                                        if (launcherBgBlue >= 0 && launcherBgBlue <= 100)
+                                        {
+                                            launcherBgBlue = launcherBgBlue / 100;
+                                        }
+                                        else
+                                        {
+                                            launcherBgBlue = 0.3f;
+                                        }
+
+                                        if (m_player->m_stereo3D == STEREO_VR)
+                                        {
+                                            result = RegQueryValueEx(hKey, "highlightColorVR", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                                        }
+                                        else
+                                        {
+                                            result = RegQueryValueEx(hKey, "highlightColor", NULL, &type, reinterpret_cast<BYTE *>(&valueRead), &valueSize);
+                                        }
+
+
+                                        if (result != ERROR_SUCCESS)
+                                        {
+                                            // Error reading from registry
+                                        }
+                                        else
+                                        {
+                                            // Successfully read the value, now assign it to the corresponding class member
+                                            highlightChoice = static_cast<int>(valueRead);
+                                            updateHighlightColor();
+                                            // Close the key
+                                            RegCloseKey(hKey);
+                                        }
+                                    }
+                                }
+                                }
+                            }
+                        }
+                    }
+                    }
+                }
+            }
+        }
+         
+      
+   }
+}
+
 void LiveUI::launcherSaveFilter()
 {
    // Launcher
@@ -3106,7 +3559,8 @@ void LiveUI::launcherLoadFilter()
 void LiveUI::OpenTweakMode()
 {
 
-
+   // Launcher
+   launcherLoadValues();
 
    if (m_player->m_launcherActive)
    {
@@ -3389,6 +3843,7 @@ void LiveUI::OnTweakModeEvent(const int keyEvent, const int keycode)
             if (setupMode)
             {
                setupMode = false;
+               launcherSaveValues();
                swapImage = true;
             }
             else
@@ -4667,7 +5122,7 @@ void LiveUI::UpdateTweakModeUI()
    ImGui::SetNextWindowBgAlpha(1.0f - launcherWindowTransparency);
 
 
-   ImGui::SetNextWindowBgAlpha(0.5f);
+   //ImGui::SetNextWindowBgAlpha(0.5f);
    //ImGui::SetNextWindowPos(ImVec2(0.5f * ImGui::GetIO().DisplaySize.x, 0.8f * ImGui::GetIO().DisplaySize.y), 0, ImVec2(0.5f, 1.f));
    //ImGui::SetNextWindowSizeConstraints(minSize, maxSize);
    ImGui::Begin("TweakUI", nullptr, window_flags);
@@ -4737,7 +5192,7 @@ void LiveUI::UpdateTweakModeUI()
                   - ((m_activeTweakPage > TP_PointOfView && m_player->m_stereo3D == STEREO_VR) ? 1 : 0);
             const int nTweakPages = 1 + (m_table->m_szRules.empty() ? 0 : 1) + (m_table->m_szDescription.empty() ? 0 : 1) + 1;
             if (m_activeTweakPage != TP_Launcher)
-            CM_ROW(setting, "Page "s.append(std::to_string(1 + pageIndex)).append("/").append(std::to_string(nTweakPages)).c_str(), "%s",
+            CM_ROW(setting, "Page "s.append(std::to_string(pageIndex)).append("/").append(std::to_string(nTweakPages)).c_str(), "%s",
                   m_activeTweakPage == TP_TableOption      ? "Table Options"
                      : m_activeTweakPage == TP_PointOfView ? "Point of View"
                      : m_activeTweakPage == TP_Rules       ? "Rules"
@@ -5262,16 +5717,6 @@ void LiveUI::UpdateTweakModeUI()
 
                ImGui::NewLine();
 
-               textcolor = ImVec4(0.5, 0.5, 0.5, 1);
-               ImGui::SetCursorPosX(550);
-               ImGui::SetCurrentFont(m_overlayBoldFont);
-               ImGui::TextColored(textcolor, "Overlay Infos");
-               ImGui::SetCurrentFont(m_overlayFont);
-               ImGui::SetCursorPosX(550);
-               ImGui::TextColored(textcolor, "flip x-axis: %d", flipAxis);
-               ImGui::SetCursorPosX(550);
-               ImGui::TextColored(textcolor, "Render probes: %d", m_live_table->m_vrenderprobe.size());
-               ImGui::NewLine();
             }
 
             if (filterMode)

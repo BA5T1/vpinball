@@ -7,6 +7,8 @@
 #define VP_VERSION_MINOR    8  // Max 2 Digits
 #define VP_VERSION_REV      0  // Max 1 Digit
 
+#define VPXLAUNCHER 0.81
+
 #define CURRENT_FILE_FORMAT_VERSION  1080
 #define NO_ENCRYPTION_FORMAT_VERSION 1050
 #define NEW_SOUND_FORMAT_VERSION     1031 // introduced surround option
@@ -22,8 +24,11 @@
 
 // Complete version string for log, crash handler,...
 #ifdef ENABLE_SDL
-#define VP_VERSION_STRING_FULL_LITERAL "v" STR(VP_VERSION_MAJOR) "." STR(VP_VERSION_MINOR) "." STR(VP_VERSION_REV) \
+//#define VP_VERSION_STRING_FULL_LITERAL "v" STR(VP_VERSION_MAJOR) "." STR(VP_VERSION_MINOR) "." STR(VP_VERSION_REV) \
 	" Beta (Rev. " STR(GIT_REVISION) " (" GIT_SHA "), " GET_PLATFORM_OS " OpenGL " GET_PLATFORM_BITS "bits)"
+#define VP_VERSION_STRING_FULL_LITERAL                                                                                                                                                       \
+   "v"                                                                                                                                                                                       \
+   "10.8.0 (Rev. 2028 x64) with VPX Launcher v." STR(VPXLAUNCHER)
 #else
 #define VP_VERSION_STRING_FULL_LITERAL "v" STR(VP_VERSION_MAJOR) "." STR(VP_VERSION_MINOR) "." STR(VP_VERSION_REV) \
 	" Beta (Rev. " STR(GIT_REVISION) " (" GIT_SHA "), " GET_PLATFORM_OS " DirectX " GET_PLATFORM_BITS "bits)"
